@@ -1,0 +1,125 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: products
+    // Document ID: auto-generated or custom
+    // Fields:
+    //   - product_id: string (required)
+    //   - name: string (required)
+    //   - description: string (optional)
+    //   - price: number (required, positive)
+    //   - offer_price: number (optional, positive)
+    //   - sizes: string (required)
+    //   - category: string (required)
+    //   - show_on_home: boolean (optional)
+    //   - show_sale_tag: boolean (optional)
+    //   - views: number (optional)
+    //   - whatsapp_clicks: number (optional)
+    //   - images: list of strings (optional)
+    //   - created_at: timestamp (optional)
+    //
+    // Collection: banners
+    // Document ID: auto-generated
+    // Fields:
+    //   - title: string (optional)
+    //   - image_url: string (required)
+    //   - sort_order: number (optional)
+    //   - created_at: timestamp (optional)
+    //
+    // Collection: admins
+    // Document ID: user UID
+    // Fields:
+    //   - role: string (required, 'admin')
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && (
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
+        ('email' in request.auth.token && (
+          request.auth.token.email == "grafiqo.np@gmail.com" ||
+          request.auth.token.email == "simplex.ktm@gmail.com"
+        ))
+      );
+    }
+
+    function isPositive(field) {
+      return request.resource.data[field] is number && request.resource.data[field] >= 0;
+    }
+
+    function isValidProduct(data) {
+      return data.keys().hasAll(['product_id', 'name', 'price', 'sizes', 'category']) &&
+             data.product_id is string && data.name is string && 
+             data.price is number && data.price >= 0 &&
+             data.sizes is string && data.category is string &&
+             (!('offer_price' in data) || data.offer_price == null || (data.offer_price is number && data.offer_price >= 0)) &&
+             (!('show_on_home' in data) || data.show_on_home is bool) &&
+             (!('show_sale_tag' in data) || data.show_sale_tag is bool) &&
+             (!('views' in data) || data.views is number) &&
+             (!('whatsapp_clicks' in data) || data.whatsapp_clicks is number) &&
+             (!('images' in data) || data.images is list) &&
+             (!('created_at' in data) || data.created_at is timestamp);
+    }
+
+    function isValidBanner(data) {
+      return data.keys().hasAll(['image_url']) && 
+             data.image_url is string &&
+             (!('title' in data) || data.title is string) &&
+             (!('sort_order' in data) || data.sort_order is number) &&
+             (!('created_at' in data) || data.created_at is timestamp);
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /admins/{userId} {
+      allow read: if isAdmin();
+      allow create: if isAdmin() && request.resource.data.role == 'admin';
+      allow update: if isAdmin() && request.resource.data.role == 'admin';
+      allow delete: if isAdmin();
+    }
+
+    match /products/{productId} {
+      // Anyone can read products
+      allow read: if true;
+      
+      // Only admins can create, update, delete products
+      allow create: if isAdmin() && isValidProduct(request.resource.data);
+      
+      // Allow anyone to update views and whatsapp_clicks (atomic increments)
+      allow update: if isAdmin() && isValidProduct(request.resource.data) || (
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['views']) &&
+        request.resource.data.views == resource.data.views + 1
+      ) || (
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['whatsapp_clicks']) &&
+        request.resource.data.whatsapp_clicks == resource.data.whatsapp_clicks + 1
+      );
+      
+      allow delete: if isAdmin();
+    }
+
+    match /banners/{bannerId} {
+      // Anyone can read banners
+      allow read: if true;
+      
+      // Only admins can create, update, delete banners
+      allow create: if isAdmin() && isValidBanner(request.resource.data);
+      allow update: if isAdmin() && isValidBanner(request.resource.data);
+      allow delete: if isAdmin();
+    }
+  }
+}

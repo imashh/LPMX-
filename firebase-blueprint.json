@@ -1,0 +1,63 @@
+{
+  "entities": {
+    "Product": {
+      "title": "Product",
+      "description": "A product in the catalog",
+      "type": "object",
+      "properties": {
+        "product_id": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "price": { "type": "number" },
+        "offer_price": { "type": "number" },
+        "sizes": { "type": "string" },
+        "category": { "type": "string" },
+        "show_on_home": { "type": "boolean" },
+        "show_sale_tag": { "type": "boolean" },
+        "views": { "type": "number" },
+        "whatsapp_clicks": { "type": "number" },
+        "images": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "created_at": { "type": "string", "format": "date-time" }
+      },
+      "required": ["product_id", "name", "price", "sizes", "category"]
+    },
+    "Banner": {
+      "title": "Banner",
+      "description": "A promotional banner",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "image_url": { "type": "string" },
+        "sort_order": { "type": "number" },
+        "created_at": { "type": "string", "format": "date-time" }
+      },
+      "required": ["image_url"]
+    },
+    "Admin": {
+      "title": "Admin",
+      "description": "An admin user",
+      "type": "object",
+      "properties": {
+        "role": { "type": "string", "enum": ["admin"] }
+      },
+      "required": ["role"]
+    }
+  },
+  "firestore": {
+    "products/{productId}": {
+      "schema": { "$ref": "#/entities/Product" },
+      "description": "Products collection"
+    },
+    "banners/{bannerId}": {
+      "schema": { "$ref": "#/entities/Banner" },
+      "description": "Banners collection"
+    },
+    "admins/{userId}": {
+      "schema": { "$ref": "#/entities/Admin" },
+      "description": "Admins collection"
+    }
+  }
+}
