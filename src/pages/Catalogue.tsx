@@ -11,6 +11,7 @@ export default function Catalogue() {
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
+    window.scrollTo(0, 0);
     const fetchProducts = async () => {
       try {
         const q = query(collection(db, 'products'), orderBy('created_at', 'desc'));
@@ -48,7 +49,7 @@ export default function Catalogue() {
     >
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
         <div>
-          <h1 className="text-4xl font-bold text-[#0f1f3d] tracking-tight mb-4">Full Catalogue</h1>
+          <h1 className="text-4xl font-black text-[#0f1f3d] tracking-tight mb-4">Full Catalogue</h1>
           <p className="text-gray-500 text-lg">Browse our complete collection of premium footwear.</p>
         </div>
         

@@ -14,6 +14,7 @@ export default function ProductDetail() {
   const [selectedSize, setSelectedSize] = useState<string>('');
 
   useEffect(() => {
+    window.scrollTo(0, 0);
     if (!id) return;
     
     const fetchProduct = async () => {
@@ -189,12 +190,12 @@ Price: NPR ${product.offer_price || product.price}`;
             <p className="text-sm font-medium text-gray-500 mb-3 tracking-widest uppercase">
               {product.product_id}
             </p>
-            <h1 className="text-4xl lg:text-5xl font-bold text-[#0f1f3d] tracking-tight mb-6">
+            <h1 className="text-4xl lg:text-5xl font-black text-gray-900 tracking-tight mb-6">
               {product.name}
             </h1>
             
             <div className="flex items-baseline gap-4 mb-8">
-              <span className="text-3xl font-bold text-[#0f1f3d]">
+              <span className="text-3xl font-black text-accent">
                 NPR {product.offer_price || product.price}
               </span>
               {product.offer_price && (
@@ -219,8 +220,8 @@ Price: NPR ${product.offer_price || product.price}`;
                   className={cn(
                     "w-14 h-14 rounded-2xl flex items-center justify-center text-lg font-medium transition-all duration-200",
                     selectedSize === size
-                      ? "bg-[#0f1f3d] text-white shadow-lg shadow-[#0f1f3d]/20 scale-105"
-                      : "bg-white text-gray-600 border border-gray-200 hover:border-[#0f1f3d] hover:text-[#0f1f3d]"
+                      ? "bg-accent text-white shadow-lg shadow-accent/20 scale-105"
+                      : "bg-white text-gray-600 border border-gray-200 hover:border-accent hover:text-accent"
                   )}
                 >
                   {size}
@@ -232,7 +233,7 @@ Price: NPR ${product.offer_price || product.price}`;
           <div className="mt-auto pt-8 border-t border-gray-100">
             <button
               onClick={handleWhatsAppClick}
-              className="w-full flex items-center justify-center bg-[#25D366] text-white py-5 px-8 rounded-2xl text-lg font-semibold hover:bg-[#128C7E] transition-all duration-300 shadow-lg shadow-[#25D366]/20 hover:shadow-[#25D366]/40 hover:-translate-y-1"
+              className="w-full flex items-center justify-center bg-accent text-white py-5 px-8 rounded-2xl text-lg font-black hover:bg-accent/90 transition-all duration-300 shadow-lg shadow-accent/20 hover:shadow-accent/40 hover:-translate-y-1"
             >
               Buy Now
             </button>

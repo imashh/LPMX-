@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+@theme {
+  --color-accent: #D22027;
+}
+
 @layer utilities {
   .scrollbar-hide::-webkit-scrollbar {
     display: none;

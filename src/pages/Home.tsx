@@ -13,6 +13,7 @@ export default function Home() {
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
 
   useEffect(() => {
+    window.scrollTo(0, 0);
     const fetchData = async () => {
       try {
         const productsQuery = query(collection(db, 'products'), orderBy('created_at', 'desc'));
@@ -113,7 +114,7 @@ export default function Home() {
         {/* Hot Deals */}
         <section>
           <div className="flex items-center justify-between mb-6 md:mb-8">
-            <h2 className="text-2xl md:text-3xl font-bold text-[#0f1f3d] tracking-tight">Hot Deals</h2>
+            <h2 className="text-2xl md:text-3xl font-black text-[#0f1f3d] tracking-tight">Hot Deals</h2>
             <Link to="/catalogue" className="hidden sm:flex items-center gap-2 text-[#0f1f3d] font-semibold hover:underline text-sm md:text-base">
               View All <ArrowRight className="w-4 h-4" />
             </Link>
@@ -147,7 +148,7 @@ export default function Home() {
         {/* Men's Collection */}
         <section>
           <div className="flex items-center justify-between mb-6 md:mb-8">
-            <h2 className="text-2xl md:text-3xl font-bold text-[#0f1f3d] tracking-tight">Men's Collection</h2>
+            <h2 className="text-2xl md:text-3xl font-black text-[#0f1f3d] tracking-tight">Men's Collection</h2>
             <Link to="/catalogue" className="hidden sm:flex items-center gap-2 text-[#0f1f3d] font-semibold hover:underline text-sm md:text-base">
               View All <ArrowRight className="w-4 h-4" />
             </Link>
@@ -181,7 +182,7 @@ export default function Home() {
         {/* Women's Collection */}
         <section>
           <div className="flex items-center justify-between mb-6 md:mb-8">
-            <h2 className="text-2xl md:text-3xl font-bold text-[#0f1f3d] tracking-tight">Women's Collection</h2>
+            <h2 className="text-2xl md:text-3xl font-black text-[#0f1f3d] tracking-tight">Women's Collection</h2>
             <Link to="/catalogue" className="hidden sm:flex items-center gap-2 text-[#0f1f3d] font-semibold hover:underline text-sm md:text-base">
               View All <ArrowRight className="w-4 h-4" />
             </Link>

@@ -59,10 +59,10 @@ Price: NPR ${product.offer_price || product.price}`;
       </div>
       
       <div className="p-4 flex flex-col flex-grow">
-        <h3 className="text-base font-medium text-gray-900 mb-1 line-clamp-1">{product.name}</h3>
+        <h3 className="text-base font-bold text-gray-900 mb-1 line-clamp-1">{product.name}</h3>
         
         <div className="flex items-baseline gap-2 mb-4">
-          <span className="text-lg font-bold text-[#0f1f3d]">
+          <span className="text-lg font-bold text-accent">
             NPR {product.offer_price || product.price}
           </span>
           {product.offer_price && (
@@ -75,7 +75,7 @@ Price: NPR ${product.offer_price || product.price}`;
         <div className="mt-auto">
           <button
             onClick={handleWhatsAppClick}
-            className="w-full flex items-center justify-center bg-[#0f1f3d] text-white py-2.5 px-4 rounded-xl text-sm font-medium hover:bg-[#1a3366] transition-colors"
+            className="w-full flex items-center justify-center bg-accent text-white py-2.5 px-4 rounded-xl text-sm font-bold hover:bg-accent/90 transition-colors"
           >
             Buy Now
           </button>

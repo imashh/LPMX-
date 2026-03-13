@@ -262,7 +262,7 @@ export default function ManageProducts() {
               setIsAdding(true);
             }
           }}
-          className="inline-flex items-center gap-2 bg-[#0f1f3d] text-white px-6 py-3 rounded-xl font-medium hover:bg-[#1a3366] transition-colors shadow-lg shadow-[#0f1f3d]/20"
+          className="inline-flex items-center gap-2 bg-accent text-white px-6 py-3 rounded-xl font-bold hover:bg-accent/90 transition-colors shadow-lg shadow-accent/20"
         >
           {isAdding ? <X className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
           {isAdding ? 'Cancel' : 'Add Product'}
@@ -351,7 +351,7 @@ export default function ManageProducts() {
                 </div>
 
                 <div className="pt-6">
-                  <button type="submit" className="w-full bg-[#0f1f3d] text-white py-4 rounded-xl font-semibold hover:bg-[#1a3366] transition-colors shadow-lg shadow-[#0f1f3d]/20">
+                  <button type="submit" className="w-full bg-accent text-white py-4 rounded-xl font-bold hover:bg-accent/90 transition-colors shadow-lg shadow-accent/20">
                     {editingProduct ? 'Update Product' : 'Save Product'}
                   </button>
                 </div>
