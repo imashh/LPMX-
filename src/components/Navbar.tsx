@@ -19,7 +19,7 @@ export default function Navbar() {
         <div className="flex justify-between h-16">
           <div className="flex items-center">
             <Link to="/" className="flex items-center gap-2">
-              <img src={LOGO_URL} alt="LPMX Logo" className="w-10 h-10 rounded-lg object-cover" referrerPolicy="no-referrer" />
+              <img src={LOGO_URL} alt="LPMX Logo" className="w-10 h-10 object-contain" referrerPolicy="no-referrer" />
               <span className="text-2xl font-bold text-[#0f1f3d] tracking-tight">LPMX</span>
             </Link>
           </div>

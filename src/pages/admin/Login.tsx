@@ -72,7 +72,7 @@ export default function Login() {
       >
         <div>
           <div className="mx-auto h-20 w-20 rounded-2xl overflow-hidden shadow-lg shadow-[#0f1f3d]/20">
-            <img src={LOGO_URL} alt="LPMX Logo" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+            <img src={LOGO_URL} alt="LPMX Logo" className="w-full h-full object-contain" referrerPolicy="no-referrer" />
           </div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900 tracking-tight">
             Admin Login

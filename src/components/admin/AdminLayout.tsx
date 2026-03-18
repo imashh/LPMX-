@@ -89,7 +89,7 @@ export default function AdminLayout() {
         <div className="h-full flex flex-col">
           <div className="flex items-center justify-between h-16 px-6 border-b border-white/10">
             <Link to="/" className="flex items-center gap-3 text-xl font-bold tracking-tight">
-              <img src={LOGO_URL} alt="LPMX Logo" className="w-8 h-8 rounded-md object-cover" referrerPolicy="no-referrer" />
+              <img src={LOGO_URL} alt="LPMX Logo" className="w-8 h-8 object-contain" referrerPolicy="no-referrer" />
               LPMX Admin
             </Link>
             <button onClick={() => setIsSidebarOpen(false)} className="lg:hidden text-gray-400 hover:text-white">

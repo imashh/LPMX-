@@ -10,7 +10,7 @@ export default function Footer() {
           {/* Column 1 */}
           <div>
             <div className="flex items-center gap-3 mb-6">
-              <img src={LOGO_URL} alt="LPMX Logo" className="w-12 h-12 rounded-lg object-cover" referrerPolicy="no-referrer" />
+              <img src={LOGO_URL} alt="LPMX Logo" className="w-12 h-12 object-contain" referrerPolicy="no-referrer" />
               <h3 className="text-2xl font-bold tracking-tight">LPMX Nepal</h3>
             </div>
             <p className="text-gray-300 mb-6 leading-relaxed">
