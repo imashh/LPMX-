@@ -6,6 +6,7 @@ import { useSettings } from '../../contexts/SettingsContext';
 import { auth, db } from '../../firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
+import { handleFirestoreError, OperationType } from '../../lib/firestoreErrorHandler';
 
 export default function AdminLayout() {
   const { logoUrl } = useSettings();
@@ -18,17 +19,18 @@ export default function AdminLayout() {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         try {
-          const isDefaultAdmin = user.email?.toLowerCase() === 'grafiqo.np@gmail.com' || 
-                                user.email?.toLowerCase() === 'simplex.ktm@gmail.com';
-          let isAdminUser = isDefaultAdmin;
+          let isAdminUser = false;
           
           try {
-            const adminDoc = await getDoc(doc(db, 'admins', user.uid));
-            if (adminDoc.exists()) {
-              isAdminUser = true;
-            }
-          } catch (e) {
+            await getDoc(doc(db, 'admins', user.uid));
+            isAdminUser = true; // If getDoc succeeds, they are an admin according to firestore rules
+          } catch (e: any) {
             console.log("Not an admin or permission denied", e);
+            if (e.code === 'permission-denied') {
+              isAdminUser = false;
+            } else {
+              handleFirestoreError(e, OperationType.GET, `admins/${user.uid}`);
+            }
           }
           
           if (isAdminUser) {

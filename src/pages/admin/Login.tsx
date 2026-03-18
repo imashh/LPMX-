@@ -6,6 +6,7 @@ import { useSettings } from '../../contexts/SettingsContext';
 import { auth, db } from '../../firebase';
 import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { handleFirestoreError, OperationType } from '../../lib/firestoreErrorHandler';
 
 export default function Login() {
   const { logoUrl } = useSettings();
@@ -20,25 +21,31 @@ export default function Login() {
       const result = await signInWithPopup(auth, provider);
       
       // Check if user is admin
-      const isDefaultAdmin = result.user.email?.toLowerCase() === 'grafiqo.np@gmail.com' || 
-                            result.user.email?.toLowerCase() === 'simplex.ktm@gmail.com';
-      let isAdminUser = isDefaultAdmin;
+      let isAdminUser = false;
       
       try {
+        console.log("Checking admin status for UID:", result.user.uid);
         const adminDoc = await getDoc(doc(db, 'admins', result.user.uid));
-        if (adminDoc.exists()) {
-          isAdminUser = true;
-        } else if (isDefaultAdmin) {
-          // Bootstrap the default admin
+        isAdminUser = true; // If getDoc succeeds, they are an admin according to firestore rules
+        
+        if (!adminDoc.exists()) {
+          console.log("Admin document not found, bootstrapping...");
+          // Bootstrap the admin
           await setDoc(doc(db, 'admins', result.user.uid), {
             role: 'admin',
-            email: result.user.email,
+            email: result.user.email?.toLowerCase(),
             created_at: serverTimestamp()
           });
+          console.log("Admin bootstrapped successfully");
         }
-      } catch (e) {
-        // If permission denied, they are not an admin (unless they are the default admin)
-        console.log("Not an admin or permission denied", e);
+      } catch (e: any) {
+        // If permission denied, they are not an admin
+        console.warn("Permission check failed:", e.code, e.message);
+        if (e.code === 'permission-denied') {
+          isAdminUser = false;
+        } else {
+          handleFirestoreError(e, OperationType.GET, `admins/${result.user.uid}`);
+        }
       }
       
       if (isAdminUser) {

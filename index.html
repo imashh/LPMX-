@@ -5,6 +5,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/jpeg" href="/logo.jpeg" />
     <title>Lpmx Nepal</title>
+    <script>
+      // Prevent libraries from trying to overwrite window.fetch if it's already a getter
+      // This addresses the "Cannot set property fetch of #<Window> which has only a getter" error
+      try {
+        const descriptor = Object.getOwnPropertyDescriptor(window, 'fetch');
+        if (descriptor && !descriptor.writable && !descriptor.set) {
+          console.log('window.fetch is a read-only getter. Protecting it.');
+          // We can't do much if it's not configurable, but we can try to catch the error
+          // or provide a dummy setter that does nothing but log.
+          try {
+            Object.defineProperty(window, 'fetch', {
+              set: function(v) { console.warn('Something tried to overwrite window.fetch. Blocked.'); },
+              configurable: true
+            });
+          } catch (e) {
+            console.warn('Could not add setter to window.fetch:', e.message);
+          }
+        }
+      } catch (e) {
+        console.error('Error in fetch protection script:', e);
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

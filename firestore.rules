@@ -49,10 +49,13 @@ service cloud.firestore {
     function isAdmin() {
       return isAuthenticated() && (
         exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
-        ('email' in request.auth.token && (
-          request.auth.token.email == "grafiqo.np@gmail.com" ||
-          request.auth.token.email == "simplex.ktm@gmail.com"
-        ))
+        (
+          'email' in request.auth.token && (
+            request.auth.token.email.lower() == "grafiqo.np@gmail.com" ||
+            request.auth.token.email.lower() == "simplex.ktm@gmail.com" ||
+            exists(/databases/$(database)/documents/admin_emails/$(request.auth.token.email.lower()))
+          )
+        )
       );
     }
 
@@ -91,6 +94,11 @@ service cloud.firestore {
       allow create: if isAdmin() && request.resource.data.role == 'admin';
       allow update: if isAdmin() && request.resource.data.role == 'admin';
       allow delete: if isAdmin();
+    }
+
+    match /admin_emails/{email} {
+      allow read: if isAdmin();
+      allow write: if isAdmin();
     }
 
     match /products/{productId} {

@@ -5,6 +5,7 @@ import { MessageCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { db } from '../firebase';
 import { collection, query, where, getDocs, doc, updateDoc, increment } from 'firebase/firestore';
+import { useSettings } from '../contexts/SettingsContext';
 
 export default function ProductDetail() {
   const { id } = useParams();
@@ -12,6 +13,7 @@ export default function ProductDetail() {
   const [loading, setLoading] = useState(true);
   const [currentImage, setCurrentImage] = useState(0);
   const [selectedSize, setSelectedSize] = useState<string>('');
+  const { whatsappTemplate } = useSettings();
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -78,18 +80,17 @@ export default function ProductDetail() {
     }
 
     const productIdNumber = product.product_id.replace('#', '');
-    const productLink = `https://lpmx.vercel.app/product/%23${productIdNumber}`;
+    const productLink = `${window.location.origin}/product/%23${productIdNumber}`;
 
-    const message = `Hello LPMX, I want to order:
+    const message = whatsappTemplate
+      .replace(/{product_name}/g, product.name)
+      .replace(/{product_id}/g, product.product_id)
+      .replace(/{price}/g, (product.offer_price || product.price).toString())
+      .replace(/{size_info}/g, selectedSize ? `Size: ${selectedSize}` : '')
+      .replace(/{url}/g, productLink)
+      .replace(/\n\s*\n/g, '\n\n'); // Clean up empty lines if {size_info} leaves a gap
 
-Product: ${product.name}
-Product ID: ${product.product_id}
-Size: ${selectedSize}
-Price: NPR ${product.offer_price || product.price}
-
-Link: ${productLink}`;
-
-    window.open(`https://wa.me/9779808456469?text=${encodeURIComponent(message)}`, '_blank');
+    window.open(`https://wa.me/9779808456469?text=${encodeURIComponent(message.trim())}`, '_blank');
   };
 
   const nextImage = () => {

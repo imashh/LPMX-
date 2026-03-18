@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { MessageCircle } from 'lucide-react';
 import { db } from '../firebase';
 import { doc, updateDoc, increment } from 'firebase/firestore';
+import { useSettings } from '../contexts/SettingsContext';
 
 interface Product {
   id?: string;
@@ -16,6 +17,7 @@ interface Product {
 
 export default function ProductCard({ product }: { product: Product }) {
   const [imageLoaded, setImageLoaded] = useState(false);
+  const { whatsappTemplate } = useSettings();
 
   const handleWhatsAppClick = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -32,13 +34,17 @@ export default function ProductCard({ product }: { product: Product }) {
       console.error('Failed to track click', err);
     }
 
-    const message = `Hello LPMX, I want to order:
+    const productUrl = `${window.location.origin}/product/${encodeURIComponent(product.product_id)}`;
+    
+    const message = whatsappTemplate
+      .replace(/{product_name}/g, product.name)
+      .replace(/{product_id}/g, product.product_id)
+      .replace(/{price}/g, (product.offer_price || product.price).toString())
+      .replace(/{size_info}/g, '') // No size selected from card
+      .replace(/{url}/g, productUrl)
+      .replace(/\n\s*\n/g, '\n\n'); // Clean up empty lines if {size_info} leaves a gap
 
-Product: ${product.name}
-Product ID: ${product.product_id}
-Price: NPR ${product.offer_price || product.price}`;
-
-    window.open(`https://wa.me/9779808456469?text=${encodeURIComponent(message)}`, '_blank');
+    window.open(`https://wa.me/9779808456469?text=${encodeURIComponent(message.trim())}`, '_blank');
   };
 
   return (

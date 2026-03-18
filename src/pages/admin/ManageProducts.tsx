@@ -6,6 +6,7 @@ import { db, storage } from '../../firebase';
 import { collection, getDocs, addDoc, deleteDoc, doc, serverTimestamp, query, orderBy, where, setDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { compressImage } from '../../lib/imageCompression';
+import { handleFirestoreError, OperationType } from '../../lib/firestoreErrorHandler';
 
 export default function ManageProducts() {
   const [products, setProducts] = useState<any[]>([]);
@@ -41,6 +42,7 @@ export default function ManageProducts() {
       setProducts(data);
     } catch (error) {
       console.error(error);
+      handleFirestoreError(error, OperationType.LIST, 'products');
       toast.error('Failed to fetch products');
     } finally {
       setLoading(false);
@@ -180,6 +182,7 @@ export default function ManageProducts() {
       fetchProducts();
     } catch (error: any) {
       console.error("Upload error:", error);
+      handleFirestoreError(error, editingProduct ? OperationType.UPDATE : OperationType.CREATE, editingProduct ? `products/${editingProduct.id}` : 'products');
       let errorMessage = editingProduct ? 'Failed to update product' : 'Failed to add product';
       if (error.code === 'storage/unauthorized') {
         errorMessage = 'Storage permission denied. Please check storage rules.';
@@ -242,6 +245,7 @@ export default function ManageProducts() {
       fetchProducts();
     } catch (error) {
       console.error(error);
+      handleFirestoreError(error, OperationType.DELETE, `products/${id}`);
       toast.error('Failed to delete product', { id: loadingToast });
     }
   };

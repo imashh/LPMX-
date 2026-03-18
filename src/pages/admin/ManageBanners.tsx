@@ -6,6 +6,7 @@ import { db, storage } from '../../firebase';
 import { collection, getDocs, addDoc, deleteDoc, doc, serverTimestamp, query, orderBy } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { compressImage } from '../../lib/imageCompression';
+import { handleFirestoreError, OperationType } from '../../lib/firestoreErrorHandler';
 
 export default function ManageBanners() {
   const [banners, setBanners] = useState<any[]>([]);
@@ -30,6 +31,7 @@ export default function ManageBanners() {
       setBanners(data);
     } catch (error) {
       console.error(error);
+      handleFirestoreError(error, OperationType.LIST, 'banners');
       toast.error('Failed to fetch banners');
     } finally {
       setLoading(false);
@@ -87,6 +89,7 @@ export default function ManageBanners() {
       fetchBanners();
     } catch (error: any) {
       console.error("Banner upload error:", error);
+      handleFirestoreError(error, OperationType.CREATE, 'banners');
       let errorMessage = 'Failed to add banner';
       if (error.code === 'storage/unauthorized') {
         errorMessage = 'Storage permission denied. Please check storage rules.';
@@ -144,6 +147,7 @@ export default function ManageBanners() {
       fetchBanners();
     } catch (error) {
       console.error(error);
+      handleFirestoreError(error, OperationType.DELETE, `banners/${id}`);
       toast.error('Failed to delete banner', { id: loadingToast });
     }
   };
