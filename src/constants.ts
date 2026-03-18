@@ -1,1 +1,1 @@
-export const LOGO_URL = "https://scontent.fktm3-1.fna.fbcdn.net/v/t39.30808-6/461661739_1072917761503846_5224938161692818131_n.jpg?_nc_cat=109&ccb=1-7&_nc_sid=1d70fc&_nc_ohc=Q_RNhJxJUZcQ7kNvwFlnmcR&_nc_oc=AdkMPZW9RLpLcr5Pg1_B53dbI8I3KPWNpZix_ueCWhzC8Dr8Czql4YV7tckfOLjr1rVBWKml2ZXrlHYzTCRfDkxJ&_nc_zt=23&_nc_ht=scontent.fktm3-1.fna&_nc_gid=48sIEwFrpBb6EJ07afkmQg&_nc_ss=8&oh=00_Afz4sV4OrQIUzXuCisiF0zBdWx_M4bkdNTa95IlEZ_XcSA&oe=69B9A8E4";
+export const LOGO_URL = "/logo.jpeg";

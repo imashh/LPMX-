@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { db, storage } from '../../firebase';
 import { collection, getDocs, addDoc, deleteDoc, doc, serverTimestamp, query, orderBy, where, setDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
+import { compressImage } from '../../lib/imageCompression';
 
 export default function ManageProducts() {
   const [products, setProducts] = useState<any[]>([]);
@@ -65,7 +66,7 @@ export default function ManageProducts() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const newFiles = Array.from(e.target.files);
       if (images.length + existingImages.length + newFiles.length > 6) {
@@ -74,17 +75,28 @@ export default function ManageProducts() {
       }
       
       const validFiles = newFiles.filter(file => {
-        if (file.size > 2 * 1024 * 1024) {
-          toast.error(`${file.name} exceeds 2MB limit`);
+        if (file.size > 5 * 1024 * 1024) { // Increased limit to 5MB before compression to allow high quality
+          toast.error(`${file.name} exceeds 5MB limit`);
           return false;
         }
         return true;
       });
 
-      setImages(prev => [...prev, ...validFiles]);
-      
-      const newPreviews = validFiles.map(file => URL.createObjectURL(file));
-      setImagePreviews(prev => [...prev, ...newPreviews]);
+      const loadingToast = toast.loading('Compressing images...');
+      try {
+        const compressedFiles = await Promise.all(
+          validFiles.map(file => compressImage(file, 200)) // Compress to ~200KB WebP
+        );
+
+        setImages(prev => [...prev, ...compressedFiles]);
+        
+        const newPreviews = compressedFiles.map(file => URL.createObjectURL(file));
+        setImagePreviews(prev => [...prev, ...newPreviews]);
+        toast.success('Images compressed and ready', { id: loadingToast });
+      } catch (error) {
+        console.error("Compression error:", error);
+        toast.error('Failed to compress images', { id: loadingToast });
+      }
     }
   };
 
@@ -312,7 +324,7 @@ export default function ManageProducts() {
                 </div>
 
                 <div className="space-y-4">
-                  <label className="block text-sm font-medium text-gray-700">Images (Max 6, up to 2MB each)</label>
+                  <label className="block text-sm font-medium text-gray-700">Images (Max 6, up to 5MB each - will be compressed to ~200KB WebP)</label>
                   <input type="file" multiple accept="image/jpeg,image/png,image/webp" onChange={handleImageChange} className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
                   
                   <div className="flex flex-wrap gap-4 mt-4">

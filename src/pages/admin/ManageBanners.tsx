@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { db, storage } from '../../firebase';
 import { collection, getDocs, addDoc, deleteDoc, doc, serverTimestamp, query, orderBy } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
+import { compressImage } from '../../lib/imageCompression';
 
 export default function ManageBanners() {
   const [banners, setBanners] = useState<any[]>([]);
@@ -35,15 +36,25 @@ export default function ManageBanners() {
     }
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error('Image exceeds 5MB limit');
+      if (file.size > 10 * 1024 * 1024) { // Allow up to 10MB for banners before compression
+        toast.error('Image exceeds 10MB limit');
         return;
       }
-      setImage(file);
-      setImagePreview(URL.createObjectURL(file));
+      
+      const loadingToast = toast.loading('Compressing banner...');
+      try {
+        // Banners might need higher quality/resolution, so target 300KB and 1920px max width
+        const compressedFile = await compressImage(file, 300, 1920, 1080);
+        setImage(compressedFile);
+        setImagePreview(URL.createObjectURL(compressedFile));
+        toast.success('Banner compressed and ready', { id: loadingToast });
+      } catch (error) {
+        console.error("Compression error:", error);
+        toast.error('Failed to compress banner', { id: loadingToast });
+      }
     }
   };
 
@@ -89,8 +100,33 @@ export default function ManageBanners() {
   };
 
   const handleDelete = async (id: string, imageUrl: string) => {
-    if (!confirm('Are you sure you want to delete this banner?')) return;
-    
+    const confirmDelete = () => {
+      toast.dismiss();
+      performDelete(id, imageUrl);
+    };
+
+    toast((t) => (
+      <div className="flex flex-col gap-3">
+        <p className="font-medium">Are you sure you want to delete this banner?</p>
+        <div className="flex gap-2">
+          <button
+            onClick={confirmDelete}
+            className="bg-red-500 text-white px-3 py-1 rounded-md text-sm font-medium"
+          >
+            Delete
+          </button>
+          <button
+            onClick={() => toast.dismiss(t.id)}
+            className="bg-gray-200 text-gray-800 px-3 py-1 rounded-md text-sm font-medium"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    ), { duration: 5000 });
+  };
+
+  const performDelete = async (id: string, imageUrl: string) => {
     const loadingToast = toast.loading('Deleting banner...');
     try {
       // Try to delete image from storage if it's a firebase storage URL
@@ -151,7 +187,7 @@ export default function ManageBanners() {
                 </div>
 
                 <div className="space-y-4">
-                  <label className="block text-sm font-medium text-gray-700">Banner Image (Max 5MB)</label>
+                  <label className="block text-sm font-medium text-gray-700">Banner Image (Max 10MB - will be compressed to ~300KB WebP)</label>
                   <input type="file" accept="image/jpeg,image/png,image/webp" onChange={handleImageChange} className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
                   
                   {imagePreview && (

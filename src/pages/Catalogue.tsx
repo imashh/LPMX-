@@ -3,7 +3,7 @@ import { motion } from 'motion/react';
 import { Search } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
 import { db } from '../firebase';
-import { collection, getDocs, query, orderBy } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
 
 export default function Catalogue() {
   const [products, setProducts] = useState<any[]>([]);
@@ -14,7 +14,8 @@ export default function Catalogue() {
     window.scrollTo(0, 0);
     const fetchProducts = async () => {
       try {
-        const q = query(collection(db, 'products'), orderBy('created_at', 'desc'));
+        // Limit to 100 products for initial load to keep it fast
+        const q = query(collection(db, 'products'), orderBy('created_at', 'desc'), limit(100));
         const querySnapshot = await getDocs(q);
         const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         setProducts(data);
@@ -35,7 +36,7 @@ export default function Catalogue() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0f1f3d]"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent"></div>
       </div>
     );
   }

@@ -77,12 +77,17 @@ export default function ProductDetail() {
       console.error('Failed to track click', err);
     }
 
+    const productIdNumber = product.product_id.replace('#', '');
+    const productLink = `https://lpmx.vercel.app/product/%23${productIdNumber}`;
+
     const message = `Hello LPMX, I want to order:
 
 Product: ${product.name}
 Product ID: ${product.product_id}
 Size: ${selectedSize}
-Price: NPR ${product.offer_price || product.price}`;
+Price: NPR ${product.offer_price || product.price}
+
+Link: ${productLink}`;
 
     window.open(`https://wa.me/9779808456469?text=${encodeURIComponent(message)}`, '_blank');
   };
@@ -114,7 +119,7 @@ Price: NPR ${product.offer_price || product.price}`;
                 setCurrentImage(Math.round(scrollLeft / width));
               }}>
                 {images.map((img: string, idx: number) => (
-                  <div key={idx} className="min-w-full h-full snap-center">
+                  <div key={idx} className="w-full h-full flex-shrink-0 snap-center">
                     <img src={img} alt={product.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                   </div>
                 ))}

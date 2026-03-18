@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { MessageCircle } from 'lucide-react';
 import { db } from '../firebase';
@@ -14,6 +15,8 @@ interface Product {
 }
 
 export default function ProductCard({ product }: { product: Product }) {
+  const [imageLoaded, setImageLoaded] = useState(false);
+
   const handleWhatsAppClick = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -43,17 +46,22 @@ Price: NPR ${product.offer_price || product.price}`;
       to={`/product/${encodeURIComponent(product.product_id)}`}
       className="group flex flex-col bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100"
     >
-      <div className="relative aspect-square overflow-hidden bg-gray-50">
+      <div className="relative aspect-square overflow-hidden bg-gray-100">
         {(product.show_sale_tag === 1 || product.show_sale_tag === true) && (
           <div className="absolute top-4 left-4 z-10 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
             Sale
           </div>
         )}
+        {!imageLoaded && (
+          <div className="absolute inset-0 bg-gray-200 animate-pulse" />
+        )}
         <img 
           src={product.images?.[0] || 'https://picsum.photos/seed/shoe/400/500'} 
           alt={product.name}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          className={`w-full h-full object-cover group-hover:scale-105 transition-all duration-500 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
           loading="lazy"
+          decoding="async"
+          onLoad={() => setImageLoaded(true)}
           referrerPolicy="no-referrer"
         />
       </div>

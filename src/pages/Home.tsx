@@ -70,11 +70,18 @@ export default function Home() {
       {banners.length > 0 && (
         <div className="relative w-full aspect-video overflow-hidden bg-gray-100">
           <div 
-            className="flex w-full h-full transition-transform duration-700 ease-in-out"
-            style={{ transform: `translateX(-${currentBannerIndex * 100}%)` }}
+            className="flex h-full transition-transform duration-700 ease-in-out"
+            style={{ 
+              width: `${banners.length * 100}%`,
+              transform: `translateX(-${currentBannerIndex * (100 / banners.length)}%)` 
+            }}
           >
             {banners.map((banner) => (
-              <div key={banner.id} className="min-w-full h-full relative flex-shrink-0">
+              <div 
+                key={banner.id} 
+                className="h-full relative flex-shrink-0"
+                style={{ width: `${100 / banners.length}%` }}
+              >
                 <img 
                   src={banner.image_url} 
                   alt={banner.title || 'Banner'} 
