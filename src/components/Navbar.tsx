@@ -2,9 +2,10 @@ import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, ShieldCheck } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { LOGO_URL } from '../constants';
+import { useSettings } from '../contexts/SettingsContext';
 
 export default function Navbar() {
+  const { logoUrl } = useSettings();
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
 
@@ -19,7 +20,7 @@ export default function Navbar() {
         <div className="flex justify-between h-16">
           <div className="flex items-center">
             <Link to="/" className="flex items-center gap-2">
-              <img src={LOGO_URL} alt="LPMX Logo" className="w-10 h-10 object-contain" referrerPolicy="no-referrer" />
+              <img src={logoUrl} alt="LPMX Logo" className="w-10 h-10 object-contain" referrerPolicy="no-referrer" />
               <span className="text-2xl font-bold text-[#0f1f3d] tracking-tight">LPMX</span>
             </Link>
           </div>

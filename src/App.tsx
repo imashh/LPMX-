@@ -9,6 +9,8 @@ import { Toaster } from 'react-hot-toast';
 import Layout from './components/Layout';
 import ErrorBoundary from './components/ErrorBoundary';
 
+import { SettingsProvider } from './contexts/SettingsContext';
+
 // Lazy load pages for better performance
 const Home = lazy(() => import('./pages/Home'));
 const Catalogue = lazy(() => import('./pages/Catalogue'));
@@ -18,6 +20,7 @@ const AdminLayout = lazy(() => import('./components/admin/AdminLayout'));
 const Dashboard = lazy(() => import('./pages/admin/Dashboard'));
 const ManageProducts = lazy(() => import('./pages/admin/ManageProducts'));
 const ManageBanners = lazy(() => import('./pages/admin/ManageBanners'));
+const Settings = lazy(() => import('./pages/admin/Settings'));
 
 const LoadingFallback = () => (
   <div className="min-h-screen flex items-center justify-center">
@@ -28,27 +31,30 @@ const LoadingFallback = () => (
 export default function App() {
   return (
     <ErrorBoundary>
-      <Router>
-        <Toaster position="top-center" />
-        <Suspense fallback={<LoadingFallback />}>
-          <Routes>
-            {/* Public Routes */}
-            <Route path="/" element={<Layout />}>
-              <Route index element={<Home />} />
-              <Route path="catalogue" element={<Catalogue />} />
-              <Route path="product/:id" element={<ProductDetail />} />
-            </Route>
+      <SettingsProvider>
+        <Router>
+          <Toaster position="top-center" />
+          <Suspense fallback={<LoadingFallback />}>
+            <Routes>
+              {/* Public Routes */}
+              <Route path="/" element={<Layout />}>
+                <Route index element={<Home />} />
+                <Route path="catalogue" element={<Catalogue />} />
+                <Route path="product/:id" element={<ProductDetail />} />
+              </Route>
 
-            {/* Admin Routes */}
-            <Route path="/admin/login" element={<AdminLogin />} />
-            <Route path="/admin" element={<AdminLayout />}>
-              <Route path="dashboard" element={<Dashboard />} />
-              <Route path="products" element={<ManageProducts />} />
-              <Route path="banners" element={<ManageBanners />} />
-            </Route>
-          </Routes>
-        </Suspense>
-      </Router>
+              {/* Admin Routes */}
+              <Route path="/admin/login" element={<AdminLogin />} />
+              <Route path="/admin" element={<AdminLayout />}>
+                <Route path="dashboard" element={<Dashboard />} />
+                <Route path="products" element={<ManageProducts />} />
+                <Route path="banners" element={<ManageBanners />} />
+                <Route path="settings" element={<Settings />} />
+              </Route>
+            </Routes>
+          </Suspense>
+        </Router>
+      </SettingsProvider>
     </ErrorBoundary>
   );
 }

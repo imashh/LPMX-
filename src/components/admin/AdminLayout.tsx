@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react';
 import { Outlet, Navigate, Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Package, Image as ImageIcon, LogOut, Menu, X } from 'lucide-react';
+import { LayoutDashboard, Package, Image as ImageIcon, LogOut, Menu, X, Settings } from 'lucide-react';
 import { cn } from '../../lib/utils';
-import { LOGO_URL } from '../../constants';
+import { useSettings } from '../../contexts/SettingsContext';
 import { auth, db } from '../../firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 
 export default function AdminLayout() {
+  const { logoUrl } = useSettings();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const location = useLocation();
@@ -69,6 +70,7 @@ export default function AdminLayout() {
     { name: 'Dashboard', path: '/admin/dashboard', icon: LayoutDashboard },
     { name: 'Products', path: '/admin/products', icon: Package },
     { name: 'Banners', path: '/admin/banners', icon: ImageIcon },
+    { name: 'Settings', path: '/admin/settings', icon: Settings },
   ];
 
   return (
@@ -89,7 +91,7 @@ export default function AdminLayout() {
         <div className="h-full flex flex-col">
           <div className="flex items-center justify-between h-16 px-6 border-b border-white/10">
             <Link to="/" className="flex items-center gap-3 text-xl font-bold tracking-tight">
-              <img src={LOGO_URL} alt="LPMX Logo" className="w-8 h-8 object-contain" referrerPolicy="no-referrer" />
+              <img src={logoUrl} alt="LPMX Logo" className="w-8 h-8 object-contain" referrerPolicy="no-referrer" />
               LPMX Admin
             </Link>
             <button onClick={() => setIsSidebarOpen(false)} className="lg:hidden text-gray-400 hover:text-white">

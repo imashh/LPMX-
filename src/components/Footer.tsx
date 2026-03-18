@@ -1,8 +1,10 @@
 import { Link } from 'react-router-dom';
 import { Facebook, Instagram, MessageCircle, MapPin, Phone } from 'lucide-react';
-import { LOGO_URL } from '../constants';
+import { useSettings } from '../contexts/SettingsContext';
 
 export default function Footer() {
+  const { logoUrl } = useSettings();
+
   return (
     <footer className="bg-[#0f1f3d] text-white pt-16 pb-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -10,7 +12,7 @@ export default function Footer() {
           {/* Column 1 */}
           <div>
             <div className="flex items-center gap-3 mb-6">
-              <img src={LOGO_URL} alt="LPMX Logo" className="w-12 h-12 object-contain" referrerPolicy="no-referrer" />
+              <img src={logoUrl} alt="LPMX Logo" className="w-12 h-12 object-contain" referrerPolicy="no-referrer" />
               <h3 className="text-2xl font-bold tracking-tight">LPMX Nepal</h3>
             </div>
             <p className="text-gray-300 mb-6 leading-relaxed">

@@ -121,5 +121,12 @@ service cloud.firestore {
       allow update: if isAdmin() && isValidBanner(request.resource.data);
       allow delete: if isAdmin();
     }
+    match /settings/{settingId} {
+      // Anyone can read settings (like logo_url)
+      allow read: if true;
+      
+      // Only admins can update settings
+      allow write: if isAdmin();
+    }
   }
 }

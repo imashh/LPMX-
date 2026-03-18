@@ -2,12 +2,13 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import toast from 'react-hot-toast';
-import { LOGO_URL } from '../../constants';
+import { useSettings } from '../../contexts/SettingsContext';
 import { auth, db } from '../../firebase';
 import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 export default function Login() {
+  const { logoUrl } = useSettings();
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
@@ -72,7 +73,7 @@ export default function Login() {
       >
         <div>
           <div className="mx-auto h-20 w-20 rounded-2xl overflow-hidden shadow-lg shadow-[#0f1f3d]/20">
-            <img src={LOGO_URL} alt="LPMX Logo" className="w-full h-full object-contain" referrerPolicy="no-referrer" />
+            <img src={logoUrl} alt="LPMX Logo" className="w-full h-full object-contain" referrerPolicy="no-referrer" />
           </div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900 tracking-tight">
             Admin Login
