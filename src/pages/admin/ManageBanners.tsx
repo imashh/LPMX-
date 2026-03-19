@@ -16,6 +16,7 @@ export default function ManageBanners() {
   // Form state
   const [title, setTitle] = useState('');
   const [sortOrder, setSortOrder] = useState('0');
+  const [position, setPosition] = useState('hero');
   const [image, setImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
@@ -77,6 +78,7 @@ export default function ManageBanners() {
         title: title || '',
         image_url: imageUrl,
         sort_order: parseInt(sortOrder) || 0,
+        position: position,
         created_at: serverTimestamp()
       });
 
@@ -84,6 +86,7 @@ export default function ManageBanners() {
       setIsAdding(false);
       setTitle('');
       setSortOrder('0');
+      setPosition('hero');
       setImage(null);
       setImagePreview(null);
       fetchBanners();
@@ -179,10 +182,18 @@ export default function ManageBanners() {
             <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 mb-8">
               <h2 className="text-xl font-semibold mb-6">Add New Banner</h2>
               <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Banner Title (Optional)</label>
                     <input type="text" value={title} onChange={e => setTitle(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-[#0f1f3d] focus:border-transparent" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Display Position</label>
+                    <select value={position} onChange={e => setPosition(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-[#0f1f3d] focus:border-transparent">
+                      <option value="hero">Hero sections banners</option>
+                      <option value="hot_deals">Secondary banners (Under Hot Deals)</option>
+                      <option value="mens">Mens Collection Banners</option>
+                    </select>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Sort Order</label>
@@ -195,8 +206,8 @@ export default function ManageBanners() {
                   <input type="file" accept="image/jpeg,image/png,image/webp" onChange={handleImageChange} className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
                   
                   {imagePreview && (
-                    <div className="relative w-full max-w-2xl aspect-video rounded-xl overflow-hidden border border-gray-200 mt-4">
-                      <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                    <div className="relative w-full max-w-2xl aspect-video rounded-xl overflow-hidden border border-gray-200 mt-4 bg-gray-100">
+                      <img src={imagePreview} alt="Preview" className="w-full h-full object-contain" />
                       <button type="button" onClick={() => { setImage(null); setImagePreview(null); }} className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-2 hover:bg-red-600 shadow-lg">
                         <X className="w-5 h-5" />
                       </button>
@@ -219,7 +230,7 @@ export default function ManageBanners() {
         {banners.map((banner) => (
           <div key={banner.id} className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 group">
             <div className="relative aspect-video bg-gray-100">
-              <img src={banner.image_url} alt={banner.title} className="w-full h-full object-cover" />
+              <img src={banner.image_url} alt={banner.title} className="w-full h-full object-contain" />
               <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                 <button onClick={() => handleDelete(banner.id, banner.image_url)} className="bg-red-500 text-white p-3 rounded-full hover:bg-red-600 transform hover:scale-110 transition-all shadow-lg">
                   <Trash2 className="w-6 h-6" />
@@ -228,7 +239,13 @@ export default function ManageBanners() {
             </div>
             <div className="p-4">
               <h3 className="font-semibold text-gray-900 truncate">{banner.title || 'Untitled Banner'}</h3>
-              <p className="text-sm text-gray-500 mt-1">Order: {banner.sort_order}</p>
+              <div className="flex items-center justify-between mt-1">
+                <p className="text-sm text-gray-500">Order: {banner.sort_order}</p>
+                <span className="text-xs font-medium bg-gray-100 text-gray-600 px-2 py-1 rounded-md">
+                  {banner.position === 'hot_deals' ? 'Secondary (Hot Deals)' : 
+                   banner.position === 'mens' ? "Mens Collection" : 'Hero Section'}
+                </span>
+              </div>
             </div>
           </div>
         ))}

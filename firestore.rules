@@ -74,6 +74,16 @@ service cloud.firestore {
              (!('views' in data) || data.views is number) &&
              (!('whatsapp_clicks' in data) || data.whatsapp_clicks is number) &&
              (!('images' in data) || data.images is list) &&
+             (!('color_variations' in data) || (
+               data.color_variations is list &&
+               data.color_variations.size() <= 10 &&
+               data.color_variations.all(v, 
+                 v is map && 
+                 v.keys().hasAll(['color_name', 'images']) &&
+                 v.color_name is string && v.color_name.size() > 0 && v.color_name.size() < 50 &&
+                 v.images is list && v.images.size() <= 6
+               )
+             )) &&
              (!('created_at' in data) || data.created_at is timestamp);
     }
 

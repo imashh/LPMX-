@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { ArrowRight } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
+import BannerSlider from '../components/BannerSlider';
 import { db } from '../firebase';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 
@@ -11,6 +12,11 @@ export default function Home() {
   const [banners, setBanners] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
+
+  const heroBanners = banners.filter(b => b.position === 'hero' || !b.position);
+  const hotDealsBanners = banners.filter(b => b.position === 'hot_deals');
+  const mensBanners = banners.filter(b => b.position === 'mens');
+  const womensBanners = banners.filter(b => b.position === 'womens');
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -40,12 +46,12 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    if (banners.length <= 1) return;
+    if (heroBanners.length <= 1) return;
     const interval = setInterval(() => {
-      setCurrentBannerIndex((prev) => (prev + 1) % banners.length);
+      setCurrentBannerIndex((prev) => (prev + 1) % heroBanners.length);
     }, 5000);
     return () => clearInterval(interval);
-  }, [banners.length]);
+  }, [heroBanners.length]);
 
   if (loading) {
     return (
@@ -59,81 +65,44 @@ export default function Home() {
   const mensCollection = products.filter(p => p.category === 'Men').slice(0, 8);
   const womensCollection = products.filter(p => p.category === 'Women').slice(0, 8);
 
+  const renderSectionBanners = (sectionBanners: any[]) => {
+    if (sectionBanners.length === 0) return null;
+    return (
+      <div className="w-full">
+        <BannerSlider banners={sectionBanners} />
+      </div>
+    );
+  };
+
   return (
     <motion.div 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="pb-24"
+      className="pb-2 md:pb-4"
     >
       {/* Hero Banner Slider */}
-      {banners.length > 0 && (
-        <div className="relative w-full aspect-video overflow-hidden bg-gray-100">
-          <div 
-            className="flex h-full transition-transform duration-700 ease-in-out"
-            style={{ 
-              width: `${banners.length * 100}%`,
-              transform: `translateX(-${currentBannerIndex * (100 / banners.length)}%)` 
-            }}
-          >
-            {banners.map((banner) => (
-              <div 
-                key={banner.id} 
-                className="h-full relative flex-shrink-0"
-                style={{ width: `${100 / banners.length}%` }}
-              >
-                <img 
-                  src={banner.image_url} 
-                  alt={banner.title || 'Banner'} 
-                  className="w-full h-full object-cover"
-                  referrerPolicy="no-referrer"
-                />
-                {banner.title && (
-                  <div className="absolute inset-0 bg-black/10 flex items-center justify-center">
-                    <h2 className="text-2xl md:text-5xl font-bold text-white tracking-tight drop-shadow-lg px-4 text-center">
-                      {banner.title}
-                    </h2>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-          
-          {/* Banner Indicators */}
-          {banners.length > 1 && (
-            <div className="absolute bottom-4 md:bottom-6 left-1/2 -translate-x-1/2 flex gap-2">
-              {banners.map((_, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setCurrentBannerIndex(idx)}
-                  className={`w-2 h-2 md:w-2.5 md:h-2.5 rounded-full transition-all duration-300 ${
-                    currentBannerIndex === idx ? 'bg-white w-6 md:w-8' : 'bg-white/50 hover:bg-white/80'
-                  }`}
-                  aria-label={`Go to slide ${idx + 1}`}
-                />
-              ))}
-            </div>
-          )}
-        </div>
+      {heroBanners.length > 0 && (
+        <BannerSlider banners={heroBanners} />
       )}
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-12 md:mt-16 space-y-16 md:space-y-24">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4 md:mt-6 mb-2 md:mb-4">
         {/* Hot Deals */}
         <section>
-          <div className="flex items-center justify-between mb-6 md:mb-8">
+          <div className="flex items-center justify-between mb-3 md:mb-4">
             <h2 className="text-2xl md:text-3xl font-black text-[#0f1f3d] tracking-tight">Hot Deals</h2>
             <Link to="/catalogue" className="hidden sm:flex items-center gap-2 text-[#0f1f3d] font-semibold hover:underline text-sm md:text-base">
               View All <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
           {hotDeals.length > 0 ? (
-            <div className="flex overflow-x-auto gap-4 md:gap-6 pb-6 snap-x snap-mandatory scrollbar-hide">
+            <div className="flex overflow-x-auto gap-4 md:gap-6 pb-4 snap-x snap-mandatory scrollbar-hide">
               {hotDeals.map(product => (
-                <div key={product.product_id} className="min-w-full sm:min-w-[calc(50%-12px)] lg:min-w-[calc(25%-18px)] snap-start">
+                <div key={product.product_id} className="min-w-[calc(50%-8px)] md:min-w-[calc(33.333%-16px)] lg:min-w-[calc(25%-18px)] snap-start flex">
                   <ProductCard product={product} />
                 </div>
               ))}
-              <div className="min-w-[160px] md:min-w-[200px] flex items-center justify-center snap-start">
+              <div className="min-w-[140px] md:min-w-[200px] flex items-center justify-center snap-start">
                 <Link 
                   to="/catalogue" 
                   className="flex flex-col items-center gap-3 md:gap-4 text-[#0f1f3d] group"
@@ -151,23 +120,27 @@ export default function Home() {
             </p>
           )}
         </section>
+      </div>
 
+      {renderSectionBanners(hotDealsBanners)}
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4 md:mt-6 mb-2 md:mb-4">
         {/* Men's Collection */}
         <section>
-          <div className="flex items-center justify-between mb-6 md:mb-8">
+          <div className="flex items-center justify-between mb-3 md:mb-4">
             <h2 className="text-2xl md:text-3xl font-black text-[#0f1f3d] tracking-tight">Men's Collection</h2>
             <Link to="/catalogue" className="hidden sm:flex items-center gap-2 text-[#0f1f3d] font-semibold hover:underline text-sm md:text-base">
               View All <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
           {mensCollection.length > 0 ? (
-            <div className="flex overflow-x-auto gap-4 md:gap-6 pb-6 snap-x snap-mandatory scrollbar-hide">
+            <div className="flex overflow-x-auto gap-4 md:gap-6 pb-4 snap-x snap-mandatory scrollbar-hide">
               {mensCollection.map(product => (
-                <div key={product.product_id} className="min-w-full sm:min-w-[calc(50%-12px)] lg:min-w-[calc(25%-18px)] snap-start">
+                <div key={product.product_id} className="min-w-[calc(50%-8px)] md:min-w-[calc(33.333%-16px)] lg:min-w-[calc(25%-18px)] snap-start flex">
                   <ProductCard product={product} />
                 </div>
               ))}
-              <div className="min-w-[160px] md:min-w-[200px] flex items-center justify-center snap-start">
+              <div className="min-w-[140px] md:min-w-[200px] flex items-center justify-center snap-start">
                 <Link 
                   to="/catalogue" 
                   className="flex flex-col items-center gap-3 md:gap-4 text-[#0f1f3d] group"
@@ -185,23 +158,27 @@ export default function Home() {
             </p>
           )}
         </section>
+      </div>
 
+      {renderSectionBanners(mensBanners)}
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4 md:mt-6 mb-0">
         {/* Women's Collection */}
         <section>
-          <div className="flex items-center justify-between mb-6 md:mb-8">
+          <div className="flex items-center justify-between mb-3 md:mb-4">
             <h2 className="text-2xl md:text-3xl font-black text-[#0f1f3d] tracking-tight">Women's Collection</h2>
             <Link to="/catalogue" className="hidden sm:flex items-center gap-2 text-[#0f1f3d] font-semibold hover:underline text-sm md:text-base">
               View All <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
           {womensCollection.length > 0 ? (
-            <div className="flex overflow-x-auto gap-4 md:gap-6 pb-6 snap-x snap-mandatory scrollbar-hide">
+            <div className="flex overflow-x-auto gap-4 md:gap-6 pb-4 snap-x snap-mandatory scrollbar-hide">
               {womensCollection.map(product => (
-                <div key={product.product_id} className="min-w-full sm:min-w-[calc(50%-12px)] lg:min-w-[calc(25%-18px)] snap-start">
+                <div key={product.product_id} className="min-w-[calc(50%-8px)] md:min-w-[calc(33.333%-16px)] lg:min-w-[calc(25%-18px)] snap-start flex">
                   <ProductCard product={product} />
                 </div>
               ))}
-              <div className="min-w-[160px] md:min-w-[200px] flex items-center justify-center snap-start">
+              <div className="min-w-[140px] md:min-w-[200px] flex items-center justify-center snap-start">
                 <Link 
                   to="/catalogue" 
                   className="flex flex-col items-center gap-3 md:gap-4 text-[#0f1f3d] group"

@@ -8,6 +8,7 @@ const DEFAULT_WHATSAPP_TEMPLATE = `Hello LPMX, I want to order:
 Product: {product_name}
 Product ID: {product_id}
 {size_info}
+{color_info}
 Price: NPR {price}
 
 Link: {url}`;

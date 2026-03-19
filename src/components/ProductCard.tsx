@@ -50,11 +50,11 @@ export default function ProductCard({ product }: { product: Product }) {
   return (
     <Link 
       to={`/product/${encodeURIComponent(product.product_id)}`}
-      className="group flex flex-col bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100"
+      className="group flex flex-col h-full w-full bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100"
     >
       <div className="relative aspect-square overflow-hidden bg-gray-100">
         {(product.show_sale_tag === 1 || product.show_sale_tag === true) && (
-          <div className="absolute top-4 left-4 z-10 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+          <div className="absolute top-2 left-2 md:top-4 md:left-4 z-10 bg-red-500 text-white text-[10px] md:text-xs font-bold px-2 py-0.5 md:px-3 md:py-1 rounded-full uppercase tracking-wider">
             Sale
           </div>
         )}
@@ -72,24 +72,35 @@ export default function ProductCard({ product }: { product: Product }) {
         />
       </div>
       
-      <div className="p-4 flex flex-col flex-grow">
-        <h3 className="text-base font-bold text-gray-900 mb-1 line-clamp-1">{product.name}</h3>
+      <div className="p-3 md:p-4 flex flex-col flex-grow">
+        <h3 className="text-sm md:text-base font-bold text-gray-900 mb-2 line-clamp-2 min-h-[2.5rem] md:min-h-[3rem]">{product.name}</h3>
         
-        <div className="flex items-baseline gap-2 mb-4">
-          <span className="text-lg font-bold text-accent">
-            NPR {product.offer_price || product.price}
-          </span>
-          {product.offer_price && (
-            <span className="text-xs text-gray-400 line-through">
-              NPR {product.price}
-            </span>
+        <div className="flex flex-col gap-0.5 mb-3 md:mb-4">
+          {product.offer_price ? (
+            <>
+              <span className="text-[11px] md:text-xs text-gray-500 line-through">
+                NPR {product.price}
+              </span>
+              <span className="text-base md:text-lg font-bold text-accent">
+                NPR {product.offer_price}
+              </span>
+            </>
+          ) : (
+            <>
+              <span className="text-[11px] md:text-xs text-transparent select-none">
+                Spacer
+              </span>
+              <span className="text-base md:text-lg font-bold text-accent">
+                NPR {product.price}
+              </span>
+            </>
           )}
         </div>
         
         <div className="mt-auto">
           <button
             onClick={handleWhatsAppClick}
-            className="w-full flex items-center justify-center bg-accent text-white py-2.5 px-4 rounded-xl text-sm font-bold hover:bg-accent/90 transition-colors"
+            className="w-full flex items-center justify-center bg-accent text-white py-2 px-2 md:py-2.5 md:px-4 rounded-lg md:rounded-xl text-xs md:text-sm font-bold hover:bg-accent/90 transition-colors"
           >
             Buy Now
           </button>

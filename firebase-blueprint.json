@@ -20,6 +20,20 @@
           "type": "array",
           "items": { "type": "string" }
         },
+        "color_variations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "color_name": { "type": "string" },
+              "images": {
+                "type": "array",
+                "items": { "type": "string" }
+              }
+            },
+            "required": ["color_name", "images"]
+          }
+        },
         "created_at": { "type": "string", "format": "date-time" }
       },
       "required": ["product_id", "name", "price", "sizes", "category"]

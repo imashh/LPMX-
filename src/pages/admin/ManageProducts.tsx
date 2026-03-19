@@ -29,6 +29,7 @@ export default function ManageProducts() {
   const [images, setImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [existingImages, setExistingImages] = useState<string[]>([]);
+  const [colorVariations, setColorVariations] = useState<any[]>([]);
 
   useEffect(() => {
     fetchProducts();
@@ -62,6 +63,12 @@ export default function ManageProducts() {
       show_sale_tag: product.show_sale_tag === true || product.show_sale_tag === 1,
     });
     setExistingImages(product.images || []);
+    setColorVariations(product.color_variations?.map((v: any) => ({
+      ...v,
+      newImages: [],
+      newImagePreviews: [],
+      existingImages: v.images || []
+    })) || []);
     setImages([]);
     setImagePreviews([]);
     setIsAdding(true);
@@ -111,6 +118,68 @@ export default function ManageProducts() {
     setExistingImages(prev => prev.filter((_, i) => i !== index));
   };
 
+  const addColorVariation = () => {
+    setColorVariations(prev => [...prev, {
+      color_name: '',
+      newImages: [],
+      newImagePreviews: [],
+      existingImages: []
+    }]);
+  };
+
+  const removeColorVariation = (index: number) => {
+    setColorVariations(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const updateVariationName = (index: number, name: string) => {
+    setColorVariations(prev => prev.map((v, i) => i === index ? { ...v, color_name: name } : v));
+  };
+
+  const handleVariationImageChange = async (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const newFiles = Array.from(e.target.files);
+      const variation = colorVariations[index];
+      
+      if (variation.newImages.length + variation.existingImages.length + newFiles.length > 6) {
+        toast.error('Maximum 6 images allowed per color');
+        return;
+      }
+
+      const loadingToast = toast.loading('Compressing variation images...');
+      try {
+        const compressedFiles = await Promise.all(
+          newFiles.map(file => compressImage(file, 200))
+        );
+
+        setColorVariations(prev => prev.map((v, i) => i === index ? {
+          ...v,
+          newImages: [...v.newImages, ...compressedFiles],
+          newImagePreviews: [...v.newImagePreviews, ...compressedFiles.map(f => URL.createObjectURL(f))]
+        } : v));
+        
+        toast.success('Images compressed', { id: loadingToast });
+      } catch (error) {
+        console.error(error);
+        toast.error('Failed to compress images', { id: loadingToast });
+      }
+    }
+  };
+
+  const removeVariationImage = (vIndex: number, imgIndex: number, isExisting: boolean) => {
+    setColorVariations(prev => prev.map((v, i) => {
+      if (i !== vIndex) return v;
+      if (isExisting) {
+        return { ...v, existingImages: v.existingImages.filter((_: any, idx: number) => idx !== imgIndex) };
+      } else {
+        return {
+          ...v,
+          newImages: v.newImages.filter((_: any, idx: number) => idx !== imgIndex),
+          newImagePreviews: v.newImagePreviews.filter((_: any, idx: number) => idx !== imgIndex)
+        };
+      }
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -141,6 +210,26 @@ export default function ManageProducts() {
 
       const finalImages = [...existingImages, ...newImageUrls];
 
+      // Upload variation images
+      const finalColorVariations = [];
+      for (let i = 0; i < colorVariations.length; i++) {
+        const variation = colorVariations[i];
+        const variationImageUrls = [];
+        
+        for (let j = 0; j < variation.newImages.length; j++) {
+          const image = variation.newImages[j];
+          const storageRef = ref(storage, `products/${productId}_var_${i}_${Date.now()}_${j}`);
+          await uploadBytes(storageRef, image);
+          const url = await getDownloadURL(storageRef);
+          variationImageUrls.push(url);
+        }
+
+        finalColorVariations.push({
+          color_name: variation.color_name,
+          images: [...variation.existingImages, ...variationImageUrls]
+        });
+      }
+
       const productData: any = {
         name: formData.name,
         description: formData.description,
@@ -151,6 +240,7 @@ export default function ManageProducts() {
         show_on_home: formData.show_on_home,
         show_sale_tag: formData.show_sale_tag,
         images: finalImages,
+        color_variations: finalColorVariations,
       };
 
       if (editingProduct) {
@@ -179,6 +269,7 @@ export default function ManageProducts() {
       setImages([]);
       setImagePreviews([]);
       setExistingImages([]);
+      setColorVariations([]);
       fetchProducts();
     } catch (error: any) {
       console.error("Upload error:", error);
@@ -274,6 +365,7 @@ export default function ManageProducts() {
               setImages([]);
               setImagePreviews([]);
               setExistingImages([]);
+              setColorVariations([]);
             } else {
               setIsAdding(true);
             }
@@ -327,8 +419,90 @@ export default function ManageProducts() {
                   </div>
                 </div>
 
+                {/* Color Variations Section */}
+                <div className="space-y-6 pt-6 border-t border-gray-100">
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-lg font-semibold text-gray-900">Color Variations (Optional)</h3>
+                    <button
+                      type="button"
+                      onClick={addColorVariation}
+                      className="inline-flex items-center gap-2 text-accent hover:text-accent/80 font-bold text-sm"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Add Color
+                    </button>
+                  </div>
+
+                  <div className="space-y-8">
+                    {colorVariations.map((variation, vIdx) => (
+                      <div key={vIdx} className="bg-gray-50 p-6 rounded-2xl border border-gray-200 space-y-4 relative">
+                        <button
+                          type="button"
+                          onClick={() => removeColorVariation(vIdx)}
+                          className="absolute top-4 right-4 text-red-500 hover:text-red-600"
+                        >
+                          <Trash2 className="w-5 h-5" />
+                        </button>
+
+                        <div className="max-w-xs">
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Color Name (e.g., Red, Navy Blue)</label>
+                          <input
+                            type="text"
+                            required
+                            value={variation.color_name}
+                            onChange={e => updateVariationName(vIdx, e.target.value)}
+                            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#0f1f3d] focus:border-transparent bg-white"
+                          />
+                        </div>
+
+                        <div className="space-y-3">
+                          <label className="block text-sm font-medium text-gray-700">Variation Images (Max 6)</label>
+                          <input
+                            type="file"
+                            multiple
+                            accept="image/jpeg,image/png,image/webp"
+                            onChange={e => handleVariationImageChange(vIdx, e)}
+                            className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                          />
+
+                          <div className="flex flex-wrap gap-3 mt-3">
+                            {/* Existing Variation Images */}
+                            {variation.existingImages.map((url: string, imgIdx: number) => (
+                              <div key={`v-existing-${imgIdx}`} className="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-200">
+                                <img src={url} alt="" className="w-full h-full object-cover" />
+                                <button
+                                  type="button"
+                                  onClick={() => removeVariationImage(vIdx, imgIdx, true)}
+                                  className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                                >
+                                  <X className="w-3 h-3" />
+                                </button>
+                              </div>
+                            ))}
+
+                            {/* New Variation Image Previews */}
+                            {variation.newImagePreviews.map((preview: string, imgIdx: number) => (
+                              <div key={`v-new-${imgIdx}`} className="relative w-20 h-20 rounded-lg overflow-hidden border border-blue-200">
+                                <img src={preview} alt="" className="w-full h-full object-cover" />
+                                <div className="absolute top-1 left-1 bg-blue-500 text-white text-[6px] px-1 rounded">NEW</div>
+                                <button
+                                  type="button"
+                                  onClick={() => removeVariationImage(vIdx, imgIdx, false)}
+                                  className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                                >
+                                  <X className="w-3 h-3" />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
                 <div className="space-y-4">
-                  <label className="block text-sm font-medium text-gray-700">Images (Max 6, up to 5MB each - will be compressed to ~200KB WebP)</label>
+                  <label className="block text-sm font-medium text-gray-700">Main Images (Max 6, up to 5MB each - will be compressed to ~200KB WebP)</label>
                   <input type="file" multiple accept="image/jpeg,image/png,image/webp" onChange={handleImageChange} className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
                   
                   <div className="flex flex-wrap gap-4 mt-4">
