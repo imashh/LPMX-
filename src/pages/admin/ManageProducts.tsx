@@ -431,7 +431,7 @@ export default function ManageProducts() {
                 </div>
 
                 <div className="space-y-4">
-                  <label className="block text-sm font-medium text-gray-700">Main Images (Max 6, up to 5MB each - will be compressed to ~200KB WebP, and ~10KB thumbnails will be generated automatically)</label>
+                  <label className="block text-sm font-medium text-gray-700">Product Images</label>
                   <input type="file" multiple accept="image/jpeg,image/png,image/webp" onChange={handleImageChange} className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
                   
                   <div className="flex flex-wrap gap-4 mt-4">
