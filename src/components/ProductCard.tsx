@@ -13,7 +13,8 @@ interface Product {
   offer_price: number | null;
   images: string[];
   thumbnails?: string[];
-  show_sale_tag: boolean | number;
+  special_tag?: string;
+  show_sale_tag?: boolean | number;
 }
 
 export default function ProductCard({ product, priority = false }: { product: Product, priority?: boolean }) {
@@ -54,7 +55,12 @@ export default function ProductCard({ product, priority = false }: { product: Pr
       className="group flex flex-col h-full w-full bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100"
     >
       <div className="relative aspect-square overflow-hidden bg-gray-100">
-        {(product.show_sale_tag === 1 || product.show_sale_tag === true) && (
+        {product.special_tag && product.special_tag !== 'None' && (
+          <div className="absolute top-2 left-2 md:top-4 md:left-4 z-10 bg-red-500 text-white text-[10px] md:text-xs font-bold px-2 py-0.5 md:px-3 md:py-1 rounded-full uppercase tracking-wider">
+            {product.special_tag}
+          </div>
+        )}
+        {(!product.special_tag || product.special_tag === 'None') && (product.show_sale_tag === 1 || product.show_sale_tag === true) && (
           <div className="absolute top-2 left-2 md:top-4 md:left-4 z-10 bg-red-500 text-white text-[10px] md:text-xs font-bold px-2 py-0.5 md:px-3 md:py-1 rounded-full uppercase tracking-wider">
             Sale
           </div>
@@ -63,7 +69,7 @@ export default function ProductCard({ product, priority = false }: { product: Pr
           <div className="absolute inset-0 bg-gray-200 animate-pulse" />
         )}
         <img 
-          src={product.thumbnails?.[0] || product.images?.[0] || 'https://picsum.photos/seed/shoe/400/500'} 
+          src={product.thumbnails?.[0] || 'https://picsum.photos/seed/shoe/400/500'} 
           alt={product.name}
           className={`w-full h-full object-cover group-hover:scale-105 transition-all duration-500 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
           loading={priority ? "eager" : "lazy"}

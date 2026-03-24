@@ -53,8 +53,8 @@ export default function ManageBanners() {
       
       const loadingToast = toast.loading('Compressing banner...');
       try {
-        // Banners might need higher quality/resolution, so target 300KB and 1920px max width
-        const compressedFile = await compressImage(file, 300, 1920, 1080);
+        // Banners might need higher quality/resolution, so target 100KB and 1920px max width
+        const compressedFile = await compressImage(file, 100, 1920, 1080);
         setImage(compressedFile);
         setImagePreview(URL.createObjectURL(compressedFile));
         toast.success('Banner compressed and ready', { id: loadingToast });
@@ -216,7 +216,7 @@ export default function ManageBanners() {
                 </div>
 
                 <div className="space-y-4">
-                  <label className="block text-sm font-medium text-gray-700">Banner Image (Max 10MB - will be compressed to ~300KB WebP)</label>
+                  <label className="block text-sm font-medium text-gray-700">Banner Image (Max 10MB - will be compressed to ~100KB WebP)</label>
                   <input type="file" accept="image/jpeg,image/png,image/webp" onChange={handleImageChange} className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
                   
                   {imagePreview && (

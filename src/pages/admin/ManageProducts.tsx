@@ -24,7 +24,7 @@ export default function ManageProducts() {
     sizes: '',
     category: 'None',
     show_on_home: false,
-    show_sale_tag: false,
+    special_tag: 'None',
   });
   const [images, setImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
@@ -66,7 +66,7 @@ export default function ManageProducts() {
       sizes: product.sizes,
       category: product.category || 'None',
       show_on_home: product.show_on_home === true || product.show_on_home === 1,
-      show_sale_tag: product.show_sale_tag === true || product.show_sale_tag === 1,
+      special_tag: product.special_tag || (product.show_sale_tag ? 'SALE' : 'None'),
     });
     setExistingImages(product.images || []);
     setExistingThumbnails(product.thumbnails || []);
@@ -97,7 +97,7 @@ export default function ManageProducts() {
       const loadingToast = toast.loading('Compressing images...');
       try {
         const compressedFiles = await Promise.all(
-          validFiles.map(file => compressImage(file, 200, 1200, 1200)) // Compress to ~200KB WebP
+          validFiles.map(file => compressImage(file, 100, 1200, 1200)) // Compress to ~100KB WebP
         );
 
         setImages(prev => [...prev, ...compressedFiles]);
@@ -155,8 +155,8 @@ export default function ManageProducts() {
       for (let i = 0; i < images.length; i++) {
         const image = images[i];
         
-        // Generate thumbnail (~10KB, max 400x400)
-        const thumbnail = await compressImage(image, 10, 400, 400);
+        // Generate thumbnail (~5KB, max 400x400)
+        const thumbnail = await compressImage(image, 5, 400, 400);
 
         // Upload high quality image
         const storageRef = ref(storage, `products/${productId}_${Date.now()}_${i}`);
@@ -225,7 +225,7 @@ export default function ManageProducts() {
         sizes: formData.sizes,
         category: formData.category,
         show_on_home: formData.show_on_home,
-        show_sale_tag: formData.show_sale_tag,
+        special_tag: formData.special_tag,
         images: finalImages,
         thumbnails: finalThumbnails,
       };
@@ -251,7 +251,7 @@ export default function ManageProducts() {
       setEditingProduct(null);
       setFormData({
         name: '', price: '', offer_price: '', description: '', sizes: '',
-        category: 'None', show_on_home: false, show_sale_tag: false
+        category: 'None', show_on_home: false, special_tag: 'None'
       });
       setImages([]);
       setImagePreviews([]);
@@ -371,7 +371,7 @@ export default function ManageProducts() {
               setEditingProduct(null);
               setFormData({
                 name: '', price: '', offer_price: '', description: '', sizes: '',
-                category: 'None', show_on_home: false, show_sale_tag: false
+                category: 'None', show_on_home: false, special_tag: 'None'
               });
               setImages([]);
               setImagePreviews([]);
@@ -458,15 +458,25 @@ export default function ManageProducts() {
                   </div>
                 </div>
 
-                <div className="flex gap-6 pt-4 border-t border-gray-100">
+                <div className="flex flex-col sm:flex-row gap-6 pt-4 border-t border-gray-100">
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input type="checkbox" checked={formData.show_on_home} onChange={e => setFormData({...formData, show_on_home: e.target.checked})} className="w-5 h-5 rounded border-gray-300 text-[#0f1f3d] focus:ring-[#0f1f3d]" />
                     <span className="text-sm font-medium text-gray-700">Show in Hot Deals</span>
                   </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" checked={formData.show_sale_tag} onChange={e => setFormData({...formData, show_sale_tag: e.target.checked})} className="w-5 h-5 rounded border-gray-300 text-[#0f1f3d] focus:ring-[#0f1f3d]" />
-                    <span className="text-sm font-medium text-gray-700">Show "SALE" Tag</span>
-                  </label>
+                  
+                  <div className="flex items-center gap-3">
+                    <label className="text-sm font-medium text-gray-700">Special Tag:</label>
+                    <select 
+                      value={formData.special_tag} 
+                      onChange={e => setFormData({...formData, special_tag: e.target.value})}
+                      className="px-3 py-1.5 rounded-lg border border-gray-300 text-sm focus:ring-2 focus:ring-[#0f1f3d] focus:border-transparent"
+                    >
+                      <option value="None">None</option>
+                      <option value="SALE">SALE</option>
+                      <option value="LIMITED STOCK">LIMITED STOCK</option>
+                      <option value="NEW">NEW</option>
+                    </select>
+                  </div>
                 </div>
 
                 <div className="pt-6">
@@ -512,9 +522,17 @@ export default function ManageProducts() {
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-4">
                       <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
-                        <img src={product.thumbnails?.[0] || product.images?.[0] || 'https://picsum.photos/seed/shoe/100/100'} alt="" className="w-full h-full object-cover" />
+                        <img src={product.thumbnails?.[0] || 'https://picsum.photos/seed/shoe/100/100'} alt="" className="w-full h-full object-cover" />
                       </div>
-                      <span className="font-medium text-gray-900">{product.name}</span>
+                      <div className="flex flex-col">
+                        <span className="font-medium text-gray-900">{product.name}</span>
+                        {product.special_tag && product.special_tag !== 'None' && (
+                          <span className="text-[10px] font-bold text-red-500 uppercase">{product.special_tag}</span>
+                        )}
+                        {!product.special_tag && (product.show_sale_tag === 1 || product.show_sale_tag === true) && (
+                          <span className="text-[10px] font-bold text-red-500 uppercase">SALE</span>
+                        )}
+                      </div>
                     </div>
                   </td>
                   <td className="px-6 py-4 text-gray-500 font-mono text-sm">{product.product_id}</td>
