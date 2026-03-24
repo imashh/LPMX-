@@ -18,114 +18,19 @@ export default function Settings() {
   const [templateInput, setTemplateInput] = useState(whatsappTemplate);
   const [isSavingTemplate, setIsSavingTemplate] = useState(false);
 
-  const [adminEmails, setAdminEmails] = useState<string[]>([]);
-  const [newAdminEmail, setNewAdminEmail] = useState('');
-  const [isAddingAdmin, setIsAddingAdmin] = useState(false);
-  const [isLoadingAdmins, setIsLoadingAdmins] = useState(true);
-  const [adminToRemove, setAdminToRemove] = useState<string | null>(null);
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
 
-  const defaultAdmins = ['grafiqo.np@gmail.com', 'simplex.ktm@gmail.com'];
+  const defaultAdmins = [
+    'grafiqo.np@gmail.com',
+    'simplex.ktm@gmail.com',
+    'v.divash@gmail.com',
+    'vivek.nepal@gmail.com'
+  ];
 
   useEffect(() => {
     setTemplateInput(whatsappTemplate);
   }, [whatsappTemplate]);
-
-  useEffect(() => {
-    fetchAdmins();
-  }, []);
-
-  const fetchAdmins = async () => {
-    try {
-      const snapshot = await getDocs(collection(db, 'admin_emails'));
-      const emails = snapshot.docs.map(doc => doc.id);
-      setAdminEmails(emails);
-    } catch (error) {
-      console.error("Error fetching admins:", error);
-      try {
-        handleFirestoreError(error, OperationType.LIST, 'admin_emails');
-      } catch (e) {
-        // Ignore throw
-      }
-    } finally {
-      setIsLoadingAdmins(false);
-    }
-  };
-
-  const handleAddAdmin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const email = newAdminEmail.trim().toLowerCase();
-    
-    if (!email) return;
-    if (!email.includes('@')) {
-      toast.error('Please enter a valid email address');
-      return;
-    }
-    if (defaultAdmins.includes(email) || adminEmails.includes(email)) {
-      toast.error('This email is already an admin');
-      return;
-    }
-
-    setIsAddingAdmin(true);
-    try {
-      await setDoc(doc(db, 'admin_emails', email), {
-        email: email,
-        added_at: serverTimestamp()
-      });
-      setAdminEmails([...adminEmails, email]);
-      setNewAdminEmail('');
-      toast.success('Admin added successfully');
-    } catch (error) {
-      console.error("Error adding admin:", error);
-      toast.error('Failed to add admin');
-      try {
-        handleFirestoreError(error, OperationType.CREATE, `admin_emails/${email}`);
-      } catch (e) {
-        // Ignore throw
-      }
-    } finally {
-      setIsAddingAdmin(false);
-    }
-  };
-
-  const handleRemoveAdmin = async () => {
-    if (!adminToRemove) return;
-    const email = adminToRemove;
-
-    if (defaultAdmins.includes(email)) {
-      toast.error('Cannot remove default admins');
-      setAdminToRemove(null);
-      return;
-    }
-
-    try {
-      // 1. Remove from admin_emails collection
-      await deleteDoc(doc(db, 'admin_emails', email));
-      
-      // 2. Find and remove from admins collection (if they have logged in and been bootstrapped)
-      const q = query(collection(db, 'admins'), where('email', '==', email));
-      const querySnapshot = await getDocs(q);
-      
-      const deletePromises = querySnapshot.docs.map(adminDoc => 
-        deleteDoc(doc(db, 'admins', adminDoc.id))
-      );
-      await Promise.all(deletePromises);
-
-      setAdminEmails(adminEmails.filter(e => e !== email));
-      toast.success('Admin removed successfully');
-    } catch (error) {
-      console.error("Error removing admin:", error);
-      toast.error('Failed to remove admin');
-      try {
-        handleFirestoreError(error, OperationType.DELETE, `admin_emails/${email}`);
-      } catch (e) {
-        // Ignore throw
-      }
-    } finally {
-      setAdminToRemove(null);
-    }
-  };
 
   const handleResetWebsite = async () => {
     setIsResetting(true);
@@ -424,97 +329,34 @@ export default function Settings() {
           </div>
         </div>
       </div>
-      {/* Admin Management */}
+      {/* Admins */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
           <Users className="w-5 h-5 text-gray-500" />
-          Admin Management
+          Admins
         </h2>
         
         <div className="space-y-6">
           <p className="text-sm text-gray-600">
-            Manage who has access to the admin dashboard. Users must sign in with Google using these email addresses.
+            Current administrators who have access to the admin dashboard.
           </p>
-
-          {/* Add Admin Form */}
-          <form onSubmit={handleAddAdmin} className="flex gap-3">
-            <div className="flex-1">
-              <input
-                type="email"
-                value={newAdminEmail}
-                onChange={(e) => setNewAdminEmail(e.target.value)}
-                placeholder="Enter Gmail address (e.g., user@gmail.com)"
-                className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-accent focus:border-transparent"
-                required
-              />
-            </div>
-            <button
-              type="submit"
-              disabled={isAddingAdmin || !newAdminEmail.trim()}
-              className="flex items-center gap-2 px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
-            >
-              {isAddingAdmin ? (
-                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              ) : (
-                <UserPlus className="w-5 h-5" />
-              )}
-              Add Admin
-            </button>
-          </form>
 
           {/* Admin List */}
           <div className="border border-gray-200 rounded-xl overflow-hidden">
-            <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
-              <h3 className="text-sm font-medium text-gray-700">Current Admins</h3>
-            </div>
-            
-            {isLoadingAdmins ? (
-              <div className="p-8 flex justify-center">
-                <div className="w-6 h-6 border-2 border-accent/30 border-t-accent rounded-full animate-spin" />
-              </div>
-            ) : (
-              <ul className="divide-y divide-gray-200">
-                {/* Default Admins */}
-                {defaultAdmins.map((email) => (
-                  <li key={email} className="px-4 py-3 flex items-center justify-between bg-gray-50/50">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center text-accent font-bold text-sm">
-                        {email.charAt(0).toUpperCase()}
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">{email}</p>
-                        <p className="text-xs text-gray-500">Default Admin (Cannot be removed)</p>
-                      </div>
+            <ul className="divide-y divide-gray-200">
+              {defaultAdmins.map((email) => (
+                <li key={email} className="px-4 py-3 flex items-center justify-between bg-gray-50/50">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center text-accent font-bold text-sm">
+                      {email.charAt(0).toUpperCase()}
                     </div>
-                  </li>
-                ))}
-
-                {/* Added Admins */}
-                {adminEmails.map((email) => (
-                  <li key={email} className="px-4 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 font-bold text-sm">
-                        {email.charAt(0).toUpperCase()}
-                      </div>
+                    <div>
                       <p className="text-sm font-medium text-gray-900">{email}</p>
                     </div>
-                    <button
-                      onClick={() => setAdminToRemove(email)}
-                      className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                      title="Remove Admin"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </li>
-                ))}
-
-                {adminEmails.length === 0 && (
-                  <li className="px-4 py-8 text-center text-sm text-gray-500">
-                    No additional admins added yet.
-                  </li>
-                )}
-              </ul>
-            )}
+                  </div>
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
       </div>
@@ -540,36 +382,6 @@ export default function Settings() {
           </button>
         </div>
       </div>
-
-      {/* Confirmation Modal */}
-      {adminToRemove && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <motion.div 
-            initial={{ scale: 0.95, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl"
-          >
-            <h3 className="text-lg font-bold text-gray-900 mb-2">Remove Admin?</h3>
-            <p className="text-gray-600 mb-6">
-              Are you sure you want to remove <span className="font-semibold text-gray-900">{adminToRemove}</span>? They will lose all administrative access immediately.
-            </p>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setAdminToRemove(null)}
-                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleRemoveAdmin}
-                className="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
-              >
-                Remove
-              </button>
-            </div>
-          </motion.div>
-        </div>
-      )}
 
       {/* Reset Website Modal */}
       {isResetModalOpen && (

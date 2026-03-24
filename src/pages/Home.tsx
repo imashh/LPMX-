@@ -5,7 +5,7 @@ import { ArrowRight } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
 import BannerSlider from '../components/BannerSlider';
 import { db } from '../firebase';
-import { collection, getDocs, query, orderBy } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
 
 export default function Home() {
   const [products, setProducts] = useState<any[]>([]);
@@ -22,7 +22,7 @@ export default function Home() {
     window.scrollTo(0, 0);
     const fetchData = async () => {
       try {
-        const productsQuery = query(collection(db, 'products'), orderBy('created_at', 'desc'));
+        const productsQuery = query(collection(db, 'products'), orderBy('created_at', 'desc'), limit(100));
         const bannersQuery = query(collection(db, 'banners'), orderBy('sort_order', 'asc'));
         
         const [productsSnapshot, bannersSnapshot] = await Promise.all([
@@ -97,12 +97,12 @@ export default function Home() {
           </div>
           {hotDeals.length > 0 ? (
             <div className="flex overflow-x-auto gap-4 md:gap-6 pb-4 snap-x snap-mandatory scrollbar-hide">
-              {hotDeals.map(product => (
-                <div key={product.product_id} className="min-w-[calc(50%-8px)] md:min-w-[calc(33.333%-16px)] lg:min-w-[calc(25%-18px)] snap-start flex">
-                  <ProductCard product={product} />
+              {hotDeals.map((product, index) => (
+                <div key={product.product_id} className="w-[calc(50%-8px)] md:w-[calc(33.333%-16px)] lg:w-[calc(25%-18px)] flex-none snap-start flex">
+                  <ProductCard product={product} priority={index < 4} />
                 </div>
               ))}
-              <div className="min-w-[140px] md:min-w-[200px] flex items-center justify-center snap-start">
+              <div className="w-[140px] md:w-[200px] flex-none flex items-center justify-center snap-start">
                 <Link 
                   to="/catalogue" 
                   className="flex flex-col items-center gap-3 md:gap-4 text-[#0f1f3d] group"
@@ -135,12 +135,12 @@ export default function Home() {
           </div>
           {mensCollection.length > 0 ? (
             <div className="flex overflow-x-auto gap-4 md:gap-6 pb-4 snap-x snap-mandatory scrollbar-hide">
-              {mensCollection.map(product => (
-                <div key={product.product_id} className="min-w-[calc(50%-8px)] md:min-w-[calc(33.333%-16px)] lg:min-w-[calc(25%-18px)] snap-start flex">
-                  <ProductCard product={product} />
+              {mensCollection.map((product, index) => (
+                <div key={product.product_id} className="w-[calc(50%-8px)] md:w-[calc(33.333%-16px)] lg:w-[calc(25%-18px)] flex-none snap-start flex">
+                  <ProductCard product={product} priority={index < 4} />
                 </div>
               ))}
-              <div className="min-w-[140px] md:min-w-[200px] flex items-center justify-center snap-start">
+              <div className="w-[140px] md:w-[200px] flex-none flex items-center justify-center snap-start">
                 <Link 
                   to="/catalogue" 
                   className="flex flex-col items-center gap-3 md:gap-4 text-[#0f1f3d] group"
@@ -173,12 +173,12 @@ export default function Home() {
           </div>
           {womensCollection.length > 0 ? (
             <div className="flex overflow-x-auto gap-4 md:gap-6 pb-4 snap-x snap-mandatory scrollbar-hide">
-              {womensCollection.map(product => (
-                <div key={product.product_id} className="min-w-[calc(50%-8px)] md:min-w-[calc(33.333%-16px)] lg:min-w-[calc(25%-18px)] snap-start flex">
-                  <ProductCard product={product} />
+              {womensCollection.map((product, index) => (
+                <div key={product.product_id} className="w-[calc(50%-8px)] md:w-[calc(33.333%-16px)] lg:w-[calc(25%-18px)] flex-none snap-start flex">
+                  <ProductCard product={product} priority={index < 4} />
                 </div>
               ))}
-              <div className="min-w-[140px] md:min-w-[200px] flex items-center justify-center snap-start">
+              <div className="w-[140px] md:w-[200px] flex-none flex items-center justify-center snap-start">
                 <Link 
                   to="/catalogue" 
                   className="flex flex-col items-center gap-3 md:gap-4 text-[#0f1f3d] group"

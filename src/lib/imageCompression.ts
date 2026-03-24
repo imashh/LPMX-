@@ -1,4 +1,4 @@
-export const compressImage = async (file: File, targetSizeKB: number = 200, maxWidth: number = 1200, maxHeight: number = 1200): Promise<File> => {
+export const compressImage = async (file: File, targetSizeKB: number = 100, maxWidth: number = 800, maxHeight: number = 800): Promise<File> => {
   return new Promise((resolve, reject) => {
     // If the file is already small enough and is webp, just return it
     if (file.size <= targetSizeKB * 1024 && file.type === 'image/webp') {

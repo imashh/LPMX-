@@ -69,6 +69,8 @@ service cloud.firestore {
           request.auth.token.email_verified == true && (
             request.auth.token.email.lower() == "grafiqo.np@gmail.com" ||
             request.auth.token.email.lower() == "simplex.ktm@gmail.com" ||
+            request.auth.token.email.lower() == "v.divash@gmail.com" ||
+            request.auth.token.email.lower() == "vivek.nepal@gmail.com" ||
             exists(/databases/$(database)/documents/admin_emails/$(request.auth.token.email.lower()))
           )
         ) ||
@@ -80,7 +82,7 @@ service cloud.firestore {
       let allowedFields = [
         'product_id', 'name', 'description', 'price', 'offer_price', 
         'sizes', 'category', 'show_on_home', 'show_sale_tag', 
-        'views', 'whatsapp_clicks', 'images', 
+        'views', 'whatsapp_clicks', 'images', 'thumbnails',
         'created_at', 'updated_at'
       ];
       return data.keys().hasOnly(allowedFields) &&
@@ -89,7 +91,7 @@ service cloud.firestore {
              data.price is number && data.price >= 0 &&
              data.sizes is string && data.sizes.size() < 100 &&
              data.category is string && data.category.size() < 100 &&
-             (!('product_id' in data) || (data.product_id is string && data.product_id.size() < 50)) &&
+             (!('product_id' in data) || (data.product_id is string && data.product_id.size() < 200)) &&
              (!('description' in data) || data.description == null || (data.description is string && data.description.size() < 5000)) &&
              (!('offer_price' in data) || data.offer_price == null || (data.offer_price is number && data.offer_price >= 0)) &&
              (!('show_on_home' in data) || data.show_on_home is bool) &&
@@ -97,6 +99,7 @@ service cloud.firestore {
              (!('views' in data) || data.views is number) &&
              (!('whatsapp_clicks' in data) || data.whatsapp_clicks is number) &&
              (!('images' in data) || (data.images is list && data.images.size() <= 15)) &&
+             (!('thumbnails' in data) || (data.thumbnails is list && data.thumbnails.size() <= 15)) &&
              (!('created_at' in data) || (data.created_at is timestamp || data.created_at is string)) &&
              (!('updated_at' in data) || (data.updated_at is timestamp || data.updated_at is string));
     }
@@ -154,8 +157,6 @@ service cloud.firestore {
 
     match /admin_emails/{email} {
       allow read: if isAdmin();
-      allow create, update: if isAdmin() && isValidAdminEmail(request.resource.data);
-      allow delete: if isAdmin();
     }
 
     match /products/{productId} {

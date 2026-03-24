@@ -22,7 +22,7 @@ export default function BannerSlider({ banners }: { banners: any[] }) {
           transform: `translateX(-${currentIndex * (100 / banners.length)}%)` 
         }}
       >
-        {banners.map((banner) => (
+        {banners.map((banner, index) => (
           <div 
             key={banner.id} 
             className="h-full relative flex-shrink-0"
@@ -33,6 +33,8 @@ export default function BannerSlider({ banners }: { banners: any[] }) {
               alt={banner.title || 'Banner'} 
               className="w-full h-full object-contain"
               referrerPolicy="no-referrer"
+              loading={index === 0 ? "eager" : "lazy"}
+              decoding={index === 0 ? "sync" : "async"}
             />
             {banner.title && (
               <div className="absolute inset-0 bg-black/10 flex items-center justify-center">

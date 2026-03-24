@@ -29,7 +29,9 @@ export default function ManageProducts() {
   const [images, setImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [existingImages, setExistingImages] = useState<string[]>([]);
+  const [existingThumbnails, setExistingThumbnails] = useState<string[]>([]);
   const [deletedImages, setDeletedImages] = useState<string[]>([]);
+  const [deletedThumbnails, setDeletedThumbnails] = useState<string[]>([]);
 
   useEffect(() => {
     fetchProducts();
@@ -67,7 +69,9 @@ export default function ManageProducts() {
       show_sale_tag: product.show_sale_tag === true || product.show_sale_tag === 1,
     });
     setExistingImages(product.images || []);
+    setExistingThumbnails(product.thumbnails || []);
     setDeletedImages([]);
+    setDeletedThumbnails([]);
     setImages([]);
     setImagePreviews([]);
     setIsAdding(true);
@@ -93,7 +97,7 @@ export default function ManageProducts() {
       const loadingToast = toast.loading('Compressing images...');
       try {
         const compressedFiles = await Promise.all(
-          validFiles.map(file => compressImage(file, 200)) // Compress to ~200KB WebP
+          validFiles.map(file => compressImage(file, 200, 1200, 1200)) // Compress to ~200KB WebP
         );
 
         setImages(prev => [...prev, ...compressedFiles]);
@@ -119,6 +123,12 @@ export default function ManageProducts() {
       setDeletedImages(prev => [...prev, imageUrl]);
     }
     setExistingImages(prev => prev.filter((_, i) => i !== index));
+
+    const thumbnailUrl = existingThumbnails[index];
+    if (thumbnailUrl) {
+      setDeletedThumbnails(prev => [...prev, thumbnailUrl]);
+    }
+    setExistingThumbnails(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -139,17 +149,30 @@ export default function ManageProducts() {
         productId = `#026${nextIdNum.toString().padStart(4, '0')}`;
       }
 
-      // Upload new images
+      // Upload new images and thumbnails
       const newImageUrls = [];
+      const newThumbnailUrls = [];
       for (let i = 0; i < images.length; i++) {
         const image = images[i];
+        
+        // Generate thumbnail (~10KB, max 400x400)
+        const thumbnail = await compressImage(image, 10, 400, 400);
+
+        // Upload high quality image
         const storageRef = ref(storage, `products/${productId}_${Date.now()}_${i}`);
         await uploadBytes(storageRef, image);
         const url = await getDownloadURL(storageRef);
         newImageUrls.push(url);
+
+        // Upload thumbnail
+        const thumbRef = ref(storage, `products/${productId}_${Date.now()}_${i}_thumb`);
+        await uploadBytes(thumbRef, thumbnail);
+        const thumbUrl = await getDownloadURL(thumbRef);
+        newThumbnailUrls.push(thumbUrl);
       }
 
       const finalImages = [...existingImages, ...newImageUrls];
+      const finalThumbnails = [...existingThumbnails, ...newThumbnailUrls];
 
       // Delete images that were removed from the product
       if (deletedImages.length > 0) {
@@ -160,6 +183,20 @@ export default function ManageProducts() {
               await deleteObject(imageRef);
             } catch (e) {
               console.error("Failed to delete removed image from storage", e);
+            }
+          }
+        }
+      }
+
+      // Delete thumbnails that were removed from the product
+      if (deletedThumbnails.length > 0) {
+        for (const thumbUrl of deletedThumbnails) {
+          if (thumbUrl.includes('firebasestorage.googleapis.com')) {
+            try {
+              const thumbRef = ref(storage, thumbUrl);
+              await deleteObject(thumbRef);
+            } catch (e) {
+              console.error("Failed to delete removed thumbnail from storage", e);
             }
           }
         }
@@ -190,6 +227,7 @@ export default function ManageProducts() {
         show_on_home: formData.show_on_home,
         show_sale_tag: formData.show_sale_tag,
         images: finalImages,
+        thumbnails: finalThumbnails,
       };
 
       if (editingProduct) {
@@ -218,7 +256,9 @@ export default function ManageProducts() {
       setImages([]);
       setImagePreviews([]);
       setExistingImages([]);
+      setExistingThumbnails([]);
       setDeletedImages([]);
+      setDeletedThumbnails([]);
       fetchProducts();
     } catch (error: any) {
       console.error("Upload error:", error);
@@ -273,7 +313,7 @@ export default function ManageProducts() {
     const loadingToast = toast.loading('Deleting product...');
     try {
       // Collect all image URLs from the product
-      const allImages: string[] = [...(product.images || [])];
+      const allImages: string[] = [...(product.images || []), ...(product.thumbnails || [])];
       
       // Also check for color variations images (in case they exist in the DB)
       if (product.color_variations && Array.isArray(product.color_variations)) {
@@ -391,7 +431,7 @@ export default function ManageProducts() {
                 </div>
 
                 <div className="space-y-4">
-                  <label className="block text-sm font-medium text-gray-700">Main Images (Max 6, up to 5MB each - will be compressed to ~200KB WebP)</label>
+                  <label className="block text-sm font-medium text-gray-700">Main Images (Max 6, up to 5MB each - will be compressed to ~200KB WebP, and ~10KB thumbnails will be generated automatically)</label>
                   <input type="file" multiple accept="image/jpeg,image/png,image/webp" onChange={handleImageChange} className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
                   
                   <div className="flex flex-wrap gap-4 mt-4">
@@ -472,7 +512,7 @@ export default function ManageProducts() {
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-4">
                       <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
-                        <img src={product.images?.[0] || 'https://picsum.photos/seed/shoe/100/100'} alt="" className="w-full h-full object-cover" />
+                        <img src={product.thumbnails?.[0] || product.images?.[0] || 'https://picsum.photos/seed/shoe/100/100'} alt="" className="w-full h-full object-cover" />
                       </div>
                       <span className="font-medium text-gray-900">{product.name}</span>
                     </div>

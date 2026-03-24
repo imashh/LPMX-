@@ -121,7 +121,14 @@ export default function ProductDetail() {
               }}>
                 {images.map((img: string, idx: number) => (
                   <div key={idx} className="w-full h-full flex-shrink-0 snap-center">
-                    <img src={img} alt={product.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                    <img 
+                      src={img} 
+                      alt={product.name} 
+                      className="w-full h-full object-cover" 
+                      referrerPolicy="no-referrer"
+                      loading={idx === 0 ? "eager" : "lazy"}
+                      decoding={idx === 0 ? "sync" : "async"}
+                    />
                   </div>
                 ))}
               </div>
@@ -146,6 +153,8 @@ export default function ProductDetail() {
                   alt={product.name}
                   className="w-full h-full object-cover"
                   referrerPolicy="no-referrer"
+                  loading="eager"
+                  decoding="sync"
                 />
                 {images.length > 1 && (
                   <>

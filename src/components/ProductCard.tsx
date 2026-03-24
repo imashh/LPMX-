@@ -12,10 +12,11 @@ interface Product {
   price: number;
   offer_price: number | null;
   images: string[];
+  thumbnails?: string[];
   show_sale_tag: boolean | number;
 }
 
-export default function ProductCard({ product }: { product: Product }) {
+export default function ProductCard({ product, priority = false }: { product: Product, priority?: boolean }) {
   const [imageLoaded, setImageLoaded] = useState(false);
   const { whatsappTemplate } = useSettings();
 
@@ -62,11 +63,11 @@ export default function ProductCard({ product }: { product: Product }) {
           <div className="absolute inset-0 bg-gray-200 animate-pulse" />
         )}
         <img 
-          src={product.images?.[0] || 'https://picsum.photos/seed/shoe/400/500'} 
+          src={product.thumbnails?.[0] || product.images?.[0] || 'https://picsum.photos/seed/shoe/400/500'} 
           alt={product.name}
           className={`w-full h-full object-cover group-hover:scale-105 transition-all duration-500 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
-          loading="lazy"
-          decoding="async"
+          loading={priority ? "eager" : "lazy"}
+          decoding={priority ? "sync" : "async"}
           onLoad={() => setImageLoaded(true)}
           referrerPolicy="no-referrer"
         />
