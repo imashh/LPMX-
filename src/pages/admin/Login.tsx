@@ -20,32 +20,35 @@ export default function Login() {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
       
-      // Check if user is admin
+      // Check if user is admin by trying to read/write to the admins collection
       let isAdminUser = false;
       
       try {
         console.log("Checking admin status for UID:", result.user.uid);
         const adminDoc = await getDoc(doc(db, 'admins', result.user.uid));
-        isAdminUser = true; // If getDoc succeeds, they are an admin according to firestore rules
         
-        if (!adminDoc.exists()) {
-          console.log("Admin document not found, bootstrapping...");
-          // Bootstrap the admin
-          await setDoc(doc(db, 'admins', result.user.uid), {
-            role: 'admin',
-            email: result.user.email?.toLowerCase(),
-            created_at: serverTimestamp()
-          });
-          console.log("Admin bootstrapped successfully");
+        if (adminDoc.exists()) {
+          isAdminUser = true;
+        } else {
+          console.log("Admin document not found, attempting to bootstrap...");
+          // Attempt to bootstrap. This will only succeed if the user's email 
+          // is in the authorized list according to firestore rules.
+          try {
+            await setDoc(doc(db, 'admins', result.user.uid), {
+              role: 'admin',
+              email: result.user.email?.toLowerCase(),
+              created_at: serverTimestamp()
+            });
+            console.log("Admin bootstrapped successfully");
+            isAdminUser = true;
+          } catch (bootstrapError: any) {
+            console.warn("Bootstrap failed:", bootstrapError.code);
+            isAdminUser = false;
+          }
         }
       } catch (e: any) {
-        // If permission denied, they are not an admin
         console.warn("Permission check failed:", e.code, e.message);
-        if (e.code === 'permission-denied') {
-          isAdminUser = false;
-        } else {
-          handleFirestoreError(e, OperationType.GET, `admins/${result.user.uid}`);
-        }
+        isAdminUser = false;
       }
       
       if (isAdminUser) {

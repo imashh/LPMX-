@@ -13,7 +13,6 @@ export default function ProductDetail() {
   const [loading, setLoading] = useState(true);
   const [currentImage, setCurrentImage] = useState(0);
   const [selectedSize, setSelectedSize] = useState<string>('');
-  const [selectedColor, setSelectedColor] = useState<any>(null);
   const { whatsappTemplate } = useSettings();
 
   useEffect(() => {
@@ -67,8 +66,7 @@ export default function ProductDetail() {
   }
 
   const sizes = product.sizes ? product.sizes.split(',').map((s: string) => s.trim()) : [];
-  const colorVariations = product.color_variations || [];
-  const images = selectedColor ? selectedColor.images : (product.images || []);
+  const images = product.images || [];
 
   const handleWhatsAppClick = async () => {
     try {
@@ -81,15 +79,14 @@ export default function ProductDetail() {
       console.error('Failed to track click', err);
     }
 
-    const productIdNumber = product.product_id.replace('#', '');
-    const productLink = `${window.location.origin}/product/%23${productIdNumber}`;
+    const productLink = `${window.location.origin}/product/${encodeURIComponent(product.product_id)}`;
 
     const message = whatsappTemplate
       .replace(/{product_name}/g, product.name)
       .replace(/{product_id}/g, product.product_id)
       .replace(/{price}/g, (product.offer_price || product.price).toString())
       .replace(/{size_info}/g, selectedSize ? `Size: ${selectedSize}` : '')
-      .replace(/{color_info}/g, selectedColor ? `Color: ${selectedColor.color_name}` : '')
+      .replace(/{color_info}/g, '')
       .replace(/{url}/g, productLink)
       .replace(/\n\s*\n/g, '\n\n'); // Clean up empty lines if {size_info} leaves a gap
 
@@ -218,45 +215,6 @@ export default function ProductDetail() {
               <p>{product.description}</p>
             </div>
           </div>
-
-          {colorVariations.length > 0 && (
-            <div className="mb-10">
-              <h3 className="text-sm font-semibold text-[#0f1f3d] uppercase tracking-wider mb-4">Select Color</h3>
-              <div className="flex flex-wrap gap-3">
-                <button
-                  onClick={() => {
-                    setSelectedColor(null);
-                    setCurrentImage(0);
-                  }}
-                  className={cn(
-                    "px-6 py-3 rounded-2xl text-sm font-medium transition-all duration-200 border",
-                    selectedColor === null
-                      ? "bg-[#0f1f3d] text-white shadow-lg shadow-[#0f1f3d]/20 scale-105"
-                      : "bg-white text-gray-600 border-gray-200 hover:border-[#0f1f3d] hover:text-[#0f1f3d]"
-                  )}
-                >
-                  Default
-                </button>
-                {colorVariations.map((variation: any, idx: number) => (
-                  <button
-                    key={idx}
-                    onClick={() => {
-                      setSelectedColor(variation);
-                      setCurrentImage(0);
-                    }}
-                    className={cn(
-                      "px-6 py-3 rounded-2xl text-sm font-medium transition-all duration-200 border",
-                      selectedColor?.color_name === variation.color_name
-                        ? "bg-accent text-white shadow-lg shadow-accent/20 scale-105"
-                        : "bg-white text-gray-600 border-gray-200 hover:border-accent hover:text-accent"
-                    )}
-                  >
-                    {variation.color_name}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
 
           <div className="mb-10">
             <h3 className="text-sm font-semibold text-[#0f1f3d] uppercase tracking-wider mb-4">Select Size</h3>

@@ -22,6 +22,7 @@ service cloud.firestore {
     //   - whatsapp_clicks: number (optional)
     //   - images: list of strings (optional)
     //   - created_at: timestamp (optional)
+    //   - updated_at: timestamp (optional)
     //
     // Collection: banners
     // Document ID: auto-generated
@@ -34,7 +35,22 @@ service cloud.firestore {
     // Collection: admins
     // Document ID: user UID
     // Fields:
+    //   - email: string (required)
     //   - role: string (required, 'admin')
+    //   - created_at: timestamp (optional)
+    //
+    // Collection: admin_emails
+    // Document ID: email (lowercase)
+    // Fields:
+    //   - email: string (required)
+    //   - added_at: timestamp (optional)
+    //
+    // Collection: settings
+    // Document ID: 'site'
+    // Fields:
+    //   - logo_url: string (optional)
+    //   - whatsapp_template: string (optional)
+    //   - updated_at: timestamp (optional)
     //
     // ===============================================================
 
@@ -48,51 +64,81 @@ service cloud.firestore {
 
     function isAdmin() {
       return isAuthenticated() && (
-        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
         (
-          'email' in request.auth.token && (
+          'email' in request.auth.token && 
+          request.auth.token.email_verified == true && (
             request.auth.token.email.lower() == "grafiqo.np@gmail.com" ||
             request.auth.token.email.lower() == "simplex.ktm@gmail.com" ||
             exists(/databases/$(database)/documents/admin_emails/$(request.auth.token.email.lower()))
           )
-        )
+        ) ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
       );
     }
 
-    function isPositive(field) {
-      return request.resource.data[field] is number && request.resource.data[field] >= 0;
-    }
-
     function isValidProduct(data) {
-      return data.keys().hasAll(['product_id', 'name', 'price', 'sizes', 'category']) &&
-             data.product_id is string && data.name is string && 
+      let allowedFields = [
+        'product_id', 'name', 'description', 'price', 'offer_price', 
+        'sizes', 'category', 'show_on_home', 'show_sale_tag', 
+        'views', 'whatsapp_clicks', 'images', 
+        'created_at', 'updated_at'
+      ];
+      return data.keys().hasOnly(allowedFields) &&
+             data.keys().hasAll(['name', 'price', 'sizes', 'category']) &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 200 &&
              data.price is number && data.price >= 0 &&
-             data.sizes is string && data.category is string &&
+             data.sizes is string && data.sizes.size() < 100 &&
+             data.category is string && data.category.size() < 100 &&
+             (!('product_id' in data) || (data.product_id is string && data.product_id.size() < 50)) &&
+             (!('description' in data) || data.description == null || (data.description is string && data.description.size() < 5000)) &&
              (!('offer_price' in data) || data.offer_price == null || (data.offer_price is number && data.offer_price >= 0)) &&
              (!('show_on_home' in data) || data.show_on_home is bool) &&
              (!('show_sale_tag' in data) || data.show_sale_tag is bool) &&
              (!('views' in data) || data.views is number) &&
              (!('whatsapp_clicks' in data) || data.whatsapp_clicks is number) &&
-             (!('images' in data) || data.images is list) &&
-             (!('color_variations' in data) || (
-               data.color_variations is list &&
-               data.color_variations.size() <= 10 &&
-               data.color_variations.all(v, 
-                 v is map && 
-                 v.keys().hasAll(['color_name', 'images']) &&
-                 v.color_name is string && v.color_name.size() > 0 && v.color_name.size() < 50 &&
-                 v.images is list && v.images.size() <= 6
-               )
-             )) &&
-             (!('created_at' in data) || data.created_at is timestamp);
+             (!('images' in data) || (data.images is list && data.images.size() <= 15)) &&
+             (!('created_at' in data) || (data.created_at is timestamp || data.created_at is string)) &&
+             (!('updated_at' in data) || (data.updated_at is timestamp || data.updated_at is string));
     }
 
     function isValidBanner(data) {
-      return data.keys().hasAll(['image_url']) && 
-             data.image_url is string &&
-             (!('title' in data) || data.title is string) &&
+      let allowedFields = ['image_url', 'title', 'sort_order', 'position', 'created_at'];
+      return data.keys().hasOnly(allowedFields) &&
+             data.keys().hasAll(['image_url']) && 
+             data.image_url is string && data.image_url.size() < 1000 &&
+             (!('title' in data) || (data.title is string && data.title.size() < 200)) &&
              (!('sort_order' in data) || data.sort_order is number) &&
-             (!('created_at' in data) || data.created_at is timestamp);
+             (!('position' in data) || (data.position is string && data.position.size() < 50)) &&
+             (!('created_at' in data) || (data.created_at is timestamp || data.created_at is string));
+    }
+
+    function isValidAdmin(data) {
+      let allowedFields = ['email', 'role', 'created_at'];
+      return data.keys().hasOnly(allowedFields) &&
+             data.keys().hasAll(['email', 'role']) &&
+             data.email is string && data.email.size() < 200 &&
+             data.role == 'admin' &&
+             (!('created_at' in data) || (data.created_at is timestamp || data.created_at is string));
+    }
+
+    function isValidAdminEmail(data) {
+      let allowedFields = ['email', 'added_at'];
+      return data.keys().hasOnly(allowedFields) &&
+             data.keys().hasAll(['email']) &&
+             data.email is string && data.email.size() < 200 &&
+             (!('added_at' in data) || (data.added_at is timestamp || data.added_at is string));
+    }
+
+    function isValidSetting(data) {
+      let allowedFields = ['logo_url', 'whatsapp_template', 'updated_at'];
+      return data.keys().hasOnly(allowedFields) &&
+             (!('logo_url' in data) || (data.logo_url is string && data.logo_url.size() < 1000)) &&
+             (!('whatsapp_template' in data) || (data.whatsapp_template is string && data.whatsapp_template.size() < 2000)) &&
+             (!('updated_at' in data) || (data.updated_at is timestamp || data.updated_at is string));
+    }
+
+    function areImmutableFieldsUnchanged(fields) {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny(fields);
     }
 
     // ===============================================================
@@ -101,14 +147,15 @@ service cloud.firestore {
 
     match /admins/{userId} {
       allow read: if isAdmin();
-      allow create: if isAdmin() && request.resource.data.role == 'admin';
-      allow update: if isAdmin() && request.resource.data.role == 'admin';
+      allow create: if isAdmin() && isValidAdmin(request.resource.data);
+      allow update: if isAdmin() && isValidAdmin(request.resource.data) && areImmutableFieldsUnchanged(['created_at']);
       allow delete: if isAdmin();
     }
 
     match /admin_emails/{email} {
       allow read: if isAdmin();
-      allow write: if isAdmin();
+      allow create, update: if isAdmin() && isValidAdminEmail(request.resource.data);
+      allow delete: if isAdmin();
     }
 
     match /products/{productId} {
@@ -119,7 +166,7 @@ service cloud.firestore {
       allow create: if isAdmin() && isValidProduct(request.resource.data);
       
       // Allow anyone to update views and whatsapp_clicks (atomic increments)
-      allow update: if isAdmin() && isValidProduct(request.resource.data) || (
+      allow update: if (isAdmin() && isValidProduct(request.resource.data) && areImmutableFieldsUnchanged(['created_at'])) || (
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['views']) &&
         request.resource.data.views == resource.data.views + 1
       ) || (
@@ -136,15 +183,17 @@ service cloud.firestore {
       
       // Only admins can create, update, delete banners
       allow create: if isAdmin() && isValidBanner(request.resource.data);
-      allow update: if isAdmin() && isValidBanner(request.resource.data);
+      allow update: if isAdmin() && isValidBanner(request.resource.data) && areImmutableFieldsUnchanged(['created_at']);
       allow delete: if isAdmin();
     }
+
     match /settings/{settingId} {
       // Anyone can read settings (like logo_url)
       allow read: if true;
       
       // Only admins can update settings
-      allow write: if isAdmin();
+      allow create, update: if isAdmin() && isValidSetting(request.resource.data);
+      allow delete: if isAdmin();
     }
   }
 }

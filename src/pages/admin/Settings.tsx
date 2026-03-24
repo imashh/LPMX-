@@ -3,8 +3,8 @@ import { motion } from 'motion/react';
 import { Upload, Save, Image as ImageIcon, MessageCircle, Users, UserPlus, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { db, storage } from '../../firebase';
-import { doc, setDoc, collection, getDocs, deleteDoc, query, where } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { doc, setDoc, collection, getDocs, deleteDoc, query, where, serverTimestamp } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { useSettings } from '../../contexts/SettingsContext';
 import { compressImage } from '../../lib/imageCompression';
 import { handleFirestoreError, OperationType } from '../../lib/firestoreErrorHandler';
@@ -23,6 +23,8 @@ export default function Settings() {
   const [isAddingAdmin, setIsAddingAdmin] = useState(false);
   const [isLoadingAdmins, setIsLoadingAdmins] = useState(true);
   const [adminToRemove, setAdminToRemove] = useState<string | null>(null);
+  const [isResetModalOpen, setIsResetModalOpen] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
 
   const defaultAdmins = ['grafiqo.np@gmail.com', 'simplex.ktm@gmail.com'];
 
@@ -41,7 +43,11 @@ export default function Settings() {
       setAdminEmails(emails);
     } catch (error) {
       console.error("Error fetching admins:", error);
-      handleFirestoreError(error, OperationType.LIST, 'admin_emails');
+      try {
+        handleFirestoreError(error, OperationType.LIST, 'admin_emails');
+      } catch (e) {
+        // Ignore throw
+      }
     } finally {
       setIsLoadingAdmins(false);
     }
@@ -64,15 +70,20 @@ export default function Settings() {
     setIsAddingAdmin(true);
     try {
       await setDoc(doc(db, 'admin_emails', email), {
-        added_at: new Date().toISOString()
+        email: email,
+        added_at: serverTimestamp()
       });
       setAdminEmails([...adminEmails, email]);
       setNewAdminEmail('');
       toast.success('Admin added successfully');
     } catch (error) {
       console.error("Error adding admin:", error);
-      handleFirestoreError(error, OperationType.CREATE, `admin_emails/${email}`);
       toast.error('Failed to add admin');
+      try {
+        handleFirestoreError(error, OperationType.CREATE, `admin_emails/${email}`);
+      } catch (e) {
+        // Ignore throw
+      }
     } finally {
       setIsAddingAdmin(false);
     }
@@ -105,10 +116,90 @@ export default function Settings() {
       toast.success('Admin removed successfully');
     } catch (error) {
       console.error("Error removing admin:", error);
-      handleFirestoreError(error, OperationType.DELETE, `admin_emails/${email}`);
       toast.error('Failed to remove admin');
+      try {
+        handleFirestoreError(error, OperationType.DELETE, `admin_emails/${email}`);
+      } catch (e) {
+        // Ignore throw
+      }
     } finally {
       setAdminToRemove(null);
+    }
+  };
+
+  const handleResetWebsite = async () => {
+    setIsResetting(true);
+    const loadingToast = toast.loading('Resetting website data...');
+    try {
+      // 1. Delete all products and their images
+      const productsSnapshot = await getDocs(collection(db, 'products'));
+      for (const productDoc of productsSnapshot.docs) {
+        const product = productDoc.data();
+        const images = product.images || [];
+        
+        // Delete images from storage
+        for (const imageUrl of images) {
+          if (imageUrl.includes('firebasestorage.googleapis.com')) {
+            try {
+              const imageRef = ref(storage, imageUrl);
+              await deleteObject(imageRef);
+            } catch (e: any) {
+              if (e.code !== 'storage/object-not-found') {
+                console.error("Failed to delete product image", e);
+              }
+            }
+          }
+        }
+        
+        // Delete document
+        await deleteDoc(doc(db, 'products', productDoc.id));
+      }
+
+      // 2. Delete all banners and their images
+      const bannersSnapshot = await getDocs(collection(db, 'banners'));
+      for (const bannerDoc of bannersSnapshot.docs) {
+        const banner = bannerDoc.data();
+        const imageUrl = banner.image_url;
+        
+        if (imageUrl && imageUrl.includes('firebasestorage.googleapis.com')) {
+          try {
+            const imageRef = ref(storage, imageUrl);
+            await deleteObject(imageRef);
+          } catch (e: any) {
+            if (e.code !== 'storage/object-not-found') {
+              console.error("Failed to delete banner image", e);
+            }
+          }
+        }
+        
+        // Delete document
+        await deleteDoc(doc(db, 'banners', bannerDoc.id));
+      }
+
+      // 3. Reset site settings
+      // Delete old logo if it exists
+      if (logoUrl && logoUrl.includes('firebasestorage.googleapis.com')) {
+        try {
+          const oldLogoRef = ref(storage, logoUrl);
+          await deleteObject(oldLogoRef);
+        } catch (e: any) {
+          if (e.code !== 'storage/object-not-found') {
+            console.error("Failed to delete old logo", e);
+          }
+        }
+      }
+
+      await deleteDoc(doc(db, 'settings', 'site_settings'));
+
+      toast.success('Website reset successfully!', { id: loadingToast });
+      setIsResetModalOpen(false);
+      // Refresh page to clear local states
+      window.location.reload();
+    } catch (error) {
+      console.error("Error resetting website:", error);
+      toast.error('Failed to reset website', { id: loadingToast });
+    } finally {
+      setIsResetting(false);
     }
   };
 
@@ -136,19 +227,45 @@ export default function Settings() {
       await uploadBytes(storageRef, compressedImage);
       const downloadUrl = await getDownloadURL(storageRef);
 
+      // Delete old logo if it exists and is a firebase storage URL
+      if (logoUrl && logoUrl.includes('firebasestorage.googleapis.com')) {
+        try {
+          const oldLogoRef = ref(storage, logoUrl);
+          await deleteObject(oldLogoRef);
+        } catch (e: any) {
+          if (e.code !== 'storage/object-not-found') {
+            console.error("Failed to delete old logo from storage", e);
+          }
+        }
+      }
+
       // Save URL to Firestore
       await setDoc(doc(db, 'settings', 'site_settings'), {
         logo_url: downloadUrl,
-        updated_at: new Date().toISOString()
+        updated_at: serverTimestamp()
       }, { merge: true });
 
       toast.success('Logo updated successfully!');
       setSelectedImage(null);
       setPreviewUrl(null);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating logo:', error);
-      handleFirestoreError(error, OperationType.UPDATE, 'settings/site_settings');
-      toast.error('Failed to update logo. Please try again.');
+      
+      let errorMessage = 'Failed to update logo. Please try again.';
+      if (error.code === 'storage/unauthorized') {
+        errorMessage = 'Storage permission denied. Please check storage rules.';
+      } else if (error.message?.includes('permission-denied') || error.code === 'permission-denied') {
+        errorMessage = 'Firestore permission denied. Please check firestore rules.';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      toast.error(errorMessage);
+
+      try {
+        handleFirestoreError(error, OperationType.UPDATE, 'settings/site_settings');
+      } catch (e) {
+        // Ignore throw
+      }
     } finally {
       setIsSavingLogo(false);
     }
@@ -164,14 +281,18 @@ export default function Settings() {
     try {
       await setDoc(doc(db, 'settings', 'site_settings'), {
         whatsapp_template: templateInput,
-        updated_at: new Date().toISOString()
+        updated_at: serverTimestamp()
       }, { merge: true });
 
       toast.success('WhatsApp template updated successfully!');
     } catch (error) {
       console.error('Error updating template:', error);
-      handleFirestoreError(error, OperationType.UPDATE, 'settings/site_settings');
       toast.error('Failed to update template. Please try again.');
+      try {
+        handleFirestoreError(error, OperationType.UPDATE, 'settings/site_settings');
+      } catch (e) {
+        // Ignore throw
+      }
     } finally {
       setIsSavingTemplate(false);
     }
@@ -398,6 +519,28 @@ export default function Settings() {
         </div>
       </div>
 
+      {/* Danger Zone */}
+      <div className="bg-red-50 rounded-xl shadow-sm border border-red-100 p-6">
+        <h2 className="text-lg font-semibold text-red-900 mb-4 flex items-center gap-2">
+          <Trash2 className="w-5 h-5 text-red-600" />
+          Danger Zone
+        </h2>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <p className="text-sm font-bold text-red-900">Reset Website</p>
+            <p className="text-sm text-red-700">
+              Delete all products, banners, and settings. This action is permanent and cannot be undone.
+            </p>
+          </div>
+          <button
+            onClick={() => setIsResetModalOpen(true)}
+            className="px-6 py-2 bg-red-600 text-white rounded-lg font-bold hover:bg-red-700 transition-colors shadow-lg shadow-red-200"
+          >
+            Reset All Data
+          </button>
+        </div>
+      </div>
+
       {/* Confirmation Modal */}
       {adminToRemove && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -422,6 +565,49 @@ export default function Settings() {
                 className="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
               >
                 Remove
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Reset Website Modal */}
+      {isResetModalOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <motion.div 
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-white rounded-2xl p-6 max-w-md w-full shadow-xl"
+          >
+            <div className="flex items-center gap-3 text-red-600 mb-4">
+              <Trash2 className="w-6 h-6" />
+              <h3 className="text-xl font-bold">Reset Website Data?</h3>
+            </div>
+            <p className="text-gray-600 mb-6 leading-relaxed">
+              This will <span className="font-bold text-red-600">permanently delete</span> all products, banners, and site settings. 
+              All images in storage will also be removed. This action <span className="font-bold">cannot be undone</span>.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setIsResetModalOpen(false)}
+                disabled={isResetting}
+                className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-xl font-bold hover:bg-gray-50 transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleResetWebsite}
+                disabled={isResetting}
+                className="flex-1 px-4 py-3 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 transition-colors shadow-lg shadow-red-200 disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {isResetting ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Resetting...
+                  </>
+                ) : (
+                  'Yes, Reset All'
+                )}
               </button>
             </div>
           </motion.div>

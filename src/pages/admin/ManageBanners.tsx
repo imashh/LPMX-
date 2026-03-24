@@ -32,8 +32,12 @@ export default function ManageBanners() {
       setBanners(data);
     } catch (error) {
       console.error(error);
-      handleFirestoreError(error, OperationType.LIST, 'banners');
       toast.error('Failed to fetch banners');
+      try {
+        handleFirestoreError(error, OperationType.LIST, 'banners');
+      } catch (e) {
+        // Ignore throw
+      }
     } finally {
       setLoading(false);
     }
@@ -92,16 +96,22 @@ export default function ManageBanners() {
       fetchBanners();
     } catch (error: any) {
       console.error("Banner upload error:", error);
-      handleFirestoreError(error, OperationType.CREATE, 'banners');
+      
       let errorMessage = 'Failed to add banner';
       if (error.code === 'storage/unauthorized') {
         errorMessage = 'Storage permission denied. Please check storage rules.';
-      } else if (error.message?.includes('permission-denied')) {
+      } else if (error.message?.includes('permission-denied') || error.code === 'permission-denied') {
         errorMessage = 'Firestore permission denied. Please check firestore rules.';
       } else if (error.message) {
         errorMessage = error.message;
       }
       toast.error(errorMessage, { id: loadingToast });
+
+      try {
+        handleFirestoreError(error, OperationType.CREATE, 'banners');
+      } catch (e) {
+        // Ignore the throw from handleFirestoreError so we don't crash the UI
+      }
     }
   };
 
@@ -150,8 +160,12 @@ export default function ManageBanners() {
       fetchBanners();
     } catch (error) {
       console.error(error);
-      handleFirestoreError(error, OperationType.DELETE, `banners/${id}`);
       toast.error('Failed to delete banner', { id: loadingToast });
+      try {
+        handleFirestoreError(error, OperationType.DELETE, `banners/${id}`);
+      } catch (e) {
+        // Ignore throw
+      }
     }
   };
 

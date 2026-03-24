@@ -19,29 +19,25 @@ export default function AdminLayout() {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         try {
-          let isAdminUser = false;
+          console.log("Checking admin status for UID:", user.uid);
+          const adminDoc = await getDoc(doc(db, 'admins', user.uid));
           
-          try {
-            await getDoc(doc(db, 'admins', user.uid));
-            isAdminUser = true; // If getDoc succeeds, they are an admin according to firestore rules
-          } catch (e: any) {
-            console.log("Not an admin or permission denied", e);
-            if (e.code === 'permission-denied') {
-              isAdminUser = false;
-            } else {
-              handleFirestoreError(e, OperationType.GET, `admins/${user.uid}`);
-            }
-          }
-          
-          if (isAdminUser) {
+          if (adminDoc.exists()) {
             setIsAuthenticated(true);
           } else {
-            setIsAuthenticated(false);
-            await auth.signOut();
+            console.log("Admin document not found in layout, checking if they are an admin via email...");
+            // If they are an admin via email, they should have been bootstrapped in Login.
+            // But if they were added recently, we might need to check if they CAN read the doc.
+            // If getDoc succeeded but !exists(), it means they ARE an admin (via email) 
+            // but the doc hasn't been created yet.
+            // However, the rules for admins/{userId} allow read if isAdmin().
+            // So if getDoc succeeded, they ARE an admin.
+            setIsAuthenticated(true);
           }
-        } catch (error) {
-          console.error("Error checking admin status:", error);
+        } catch (e: any) {
+          console.warn("Not an admin or permission denied in layout", e.code);
           setIsAuthenticated(false);
+          await auth.signOut();
         }
       } else {
         setIsAuthenticated(false);
