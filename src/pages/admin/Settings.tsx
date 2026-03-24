@@ -124,8 +124,8 @@ export default function Settings() {
 
     setIsSavingLogo(true);
     try {
-      // Compress image
-      const compressedImage = await compressImage(selectedImage);
+      // Compress image to ~50KB for faster loading
+      const compressedImage = await compressImage(selectedImage, 50, 400, 400);
 
       // Upload new logo to Firebase Storage
       const storageRef = ref(storage, `settings/logo_${Date.now()}_${compressedImage.name}`);

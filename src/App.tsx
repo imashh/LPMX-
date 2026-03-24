@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { lazy, Suspense } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { lazy, Suspense, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import Layout from './components/Layout';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -28,6 +28,22 @@ const LoadingFallback = () => (
   </div>
 );
 
+const ProductRedirect = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  
+  useEffect(() => {
+    if (location.hash) {
+      // If there's a hash, it might be the product ID like #0260001
+      navigate(`/product/${encodeURIComponent(location.hash)}`, { replace: true });
+    } else {
+      navigate('/catalogue', { replace: true });
+    }
+  }, [location, navigate]);
+  
+  return <LoadingFallback />;
+};
+
 export default function App() {
   return (
     <ErrorBoundary>
@@ -40,6 +56,7 @@ export default function App() {
               <Route path="/" element={<Layout />}>
                 <Route index element={<Home />} />
                 <Route path="catalogue" element={<Catalogue />} />
+                <Route path="product" element={<ProductRedirect />} />
                 <Route path="product/:id" element={<ProductDetail />} />
               </Route>
 

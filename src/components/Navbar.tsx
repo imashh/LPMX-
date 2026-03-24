@@ -20,7 +20,7 @@ export default function Navbar() {
         <div className="flex justify-between h-16">
           <div className="flex items-center">
             <Link to="/" className="flex items-center gap-2">
-              <img src={logoUrl} alt="LPMX Logo" className="w-10 h-10 object-contain" referrerPolicy="no-referrer" />
+              <img src={logoUrl} alt="LPMX Logo" className="w-10 h-10 object-contain" referrerPolicy="no-referrer" loading="eager" decoding="sync" />
               <span className="text-2xl font-bold text-[#0f1f3d] tracking-tight">LPMX</span>
             </Link>
           </div>
@@ -39,16 +39,6 @@ export default function Navbar() {
                 {link.name}
               </Link>
             ))}
-            <Link
-              to="/admin/login"
-              className={cn(
-                "p-2 rounded-full transition-colors hover:bg-gray-100",
-                location.pathname === '/admin/login' ? "text-[#0f1f3d]" : "text-gray-500"
-              )}
-              title="Admin Login"
-            >
-              <ShieldCheck className="w-5 h-5" />
-            </Link>
           </div>
 
           {/* Mobile Menu Button */}
@@ -82,19 +72,6 @@ export default function Navbar() {
                 {link.name}
               </Link>
             ))}
-            <Link
-              to="/admin/login"
-              onClick={() => setIsOpen(false)}
-              className={cn(
-                "flex items-center gap-2 px-3 py-2 rounded-md text-base font-medium",
-                location.pathname === '/admin/login'
-                  ? "text-[#0f1f3d] bg-gray-50"
-                  : "text-gray-500 hover:text-[#0f1f3d] hover:bg-gray-50"
-              )}
-            >
-              <ShieldCheck className="w-5 h-5" />
-              Admin Login
-            </Link>
           </div>
         </div>
       )}

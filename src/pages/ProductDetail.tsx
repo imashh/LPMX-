@@ -21,7 +21,13 @@ export default function ProductDetail() {
     
     const fetchProduct = async () => {
       try {
-        const q = query(collection(db, 'products'), where('product_id', '==', id));
+        let decodedId = decodeURIComponent(id || '');
+        // Ensure ID starts with # if it looks like our ID format (026XXXX) but is missing it
+        if (decodedId && !decodedId.startsWith('#') && /^026\d{4}$/.test(decodedId)) {
+          decodedId = '#' + decodedId;
+        }
+        
+        const q = query(collection(db, 'products'), where('product_id', '==', decodedId));
         const querySnapshot = await getDocs(q);
         
         if (!querySnapshot.empty) {
