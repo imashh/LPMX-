@@ -23,10 +23,12 @@ export default function Footer() {
             <div className="space-y-4 mb-6">
               <div className="flex items-start gap-3">
                 <MapPin className="w-5 h-5 text-gray-400 mt-1 flex-shrink-0" />
-                <p className="text-gray-300">
+                <a src="https://maps.app.goo.gl/DCW9i84pQ3GDUK2UA?g_st=aw" className="text-gray-300">
                   Durbarmarg, Kathmandu<br />
-                  Kumaripati, Lalitpur
-                </p>
+                   </a>
+                <a src="https://maps.app.goo.gl/E2kyXMfSWvGA4z7H6?g_st=aw" className="text-gray-300">
+                  Kumaripati, Lalitpur <br />
+                   </a>
               </div>
               <div className="flex items-center gap-3">
                 <Phone className="w-5 h-5 text-gray-400 flex-shrink-0" />
