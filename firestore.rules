@@ -71,6 +71,7 @@ service cloud.firestore {
             request.auth.token.email.lower() == "simplex.ktm@gmail.com" ||
             request.auth.token.email.lower() == "v.divash@gmail.com" ||
             request.auth.token.email.lower() == "vivek.nepal@gmail.com" ||
+            request.auth.token.email.lower() == "prakritin92@gmail.com" ||
             exists(/databases/$(database)/documents/admin_emails/$(request.auth.token.email.lower()))
           )
         ) ||
