@@ -82,7 +82,7 @@ service cloud.firestore {
     function isValidProduct(data) {
       let allowedFields = [
         'product_id', 'name', 'description', 'price', 'offer_price', 
-        'sizes', 'category', 'show_on_home', 'show_sale_tag', 
+        'sizes', 'category', 'show_on_home', 'show_sale_tag', 'special_tag',
         'views', 'whatsapp_clicks', 'images', 'thumbnails',
         'created_at', 'updated_at'
       ];
@@ -93,6 +93,7 @@ service cloud.firestore {
              data.sizes is string && data.sizes.size() < 100 &&
              data.category is string && data.category.size() < 100 &&
              (!('product_id' in data) || (data.product_id is string && data.product_id.size() < 200)) &&
+             (!('special_tag' in data) || (data.special_tag is string && data.special_tag.size() < 100)) &&
              (!('description' in data) || data.description == null || (data.description is string && data.description.size() < 5000)) &&
              (!('offer_price' in data) || data.offer_price == null || (data.offer_price is number && data.offer_price >= 0)) &&
              (!('show_on_home' in data) || data.show_on_home is bool) &&
